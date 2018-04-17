@@ -1,0 +1,4 @@
+smsd ALL = (root) NOPASSWD: /bin/systemctl
+smsd ALL = (root) NOPASSWD: /sbin/reboot
+smsd ALL = (root) NOPASSWD: /sbin/shutdown
+smsd ALL = (root) NOPASSWD: /usr/bin/apt

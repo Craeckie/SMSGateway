@@ -1,0 +1,10 @@
+[Unit]
+Description=Notifies when service fails
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -m smsgateway.events.service_failed %I
+
+[Install]
+WantedBy=multi-user.target
