@@ -1,7 +1,9 @@
 # SMSGateway
 
+This project is in Alpha stage, so expect bugs. Pull requests welcome!
+
 The following instructions apply to a Raspberry PI running Ubuntu, but it should work similarly on other Linux distributions and platforms.
-Some commands mmight require to be invoked with `sudo`.
+Some commands might require to be invoked with `sudo`.
 
 ## Configuration
 ```bash
