@@ -40,11 +40,11 @@ def run(lines):
             try:
                 j = json.loads(l.strip())
                 if j and j['result'] == 'SUCCESS':
-                  ret = "Sent TG to %s!" % to
+                  ret = f'TG\nTo: {to}\n{msg}'
                   break
                 elif j:
                   try:
-                      ret = "Failed to send TG to %s:\n%s" % (to, j['error'])
+                      ret = f"Failed to send TG to {to}:\n{j['error']}"
                       break
                   except Exception as e:
                       ret = "Failed to send TG to %s!" % to
