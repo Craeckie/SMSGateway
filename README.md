@@ -5,6 +5,8 @@ This project is in Alpha stage, so expect bugs. Pull requests welcome!
 The following instructions apply to a Raspberry PI running Ubuntu, but it should work similarly on other Linux distributions and platforms.
 Some commands might require to be invoked with `sudo`.
 
+See [SMSGateway-Android](https://github.com/Craeckie/SMSGateway-Android) for an Android client.
+
 ## Configuration
 ```bash
 git clone https://github.com/Craeckie/SMSGateway.git
