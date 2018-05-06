@@ -89,7 +89,9 @@ def parse_message(line):
                   m += ' '.join([x for x in j['media'][field] for field in ['first_name', 'last_name', 'phone']])
                 if 'caption' in j['media'] and j['media']['caption']:
                   m += "\n%s" % j['media']['caption']
-              else:
+                if 'text' in j:
+                  m += "\n%s" % j['text']
+              elif 'text' in j:
                 m += j['text']
 
               m = replaceEmoticons(m)
