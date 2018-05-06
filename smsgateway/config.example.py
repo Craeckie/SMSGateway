@@ -44,6 +44,8 @@ SERVICES = ['dhcpcd',
             'source-facebook',
             'smstools',
             'wpa_supplicant',
+            'ModemManager',
+            'NetworkManager',
             ]
 
 WIFI_INTERFACES_ALL = ['wlan0', 'wlan1']
