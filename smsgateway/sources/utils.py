@@ -21,10 +21,18 @@ def run_cmd(args, name=None, maxlines=7, timeout=300):
 def _repl(regex, sub, text):
   return re.sub(regex, sub, text, flags=re.UNICODE)
 
-import emoji
+try:
+  import emoji
+  use_emoji = True
+except ModuleNotFoundError:
+  use_emoji = False
+
 def replaceEmoticons(text):
   text = _repl(r'\U0001F60A', ':-)', text)
   text = _repl(r'\U0001F914', ':-?', text)
   # text = _repl(r'\U0001F602', ':-D', text)
   text = _repl(r'\U0001F604', ':-D', text)
-  return emoji.demojize(text)
+  if use_emoji: 
+    return emoji.demojize(text)
+  else:
+    return text
