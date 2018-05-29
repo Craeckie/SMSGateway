@@ -25,8 +25,14 @@ api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
 
 client = TelegramClient('smsgateway', api_id, api_hash,update_workers=1, spawn_read_thread=False)
 if not client.start():
-    print("Could not connect! Run python -m smsgateway.source.telegram to authorize!")
+    msg = "Could not connect! Run python3 -m smsgateway.source.telegram to authorize!"
+    app_log.error(msg)
+    print(msg)
     sys.exit(1)
+
+msg = "Started TelegramClient"
+print(msg)
+app_log.debug(msg)
 
 @client.on(events.NewMessage())
 def callback(event):
@@ -44,11 +50,17 @@ def callback(event):
           user_name += " (%s)" % user_number
 
       if event.Message.out:
-          print("New message to %s:" % user_name)
+          msg = "New message to %s:" % user_name
+          app_log.info(msg)
+          print(msg)
       else:
-          print("New message from %s:" % user_name)
+          msg = "New message from %s:" % user_name
+          app_log.info(msg)
+          print(msg)
       print(event.message.message)
+      app_log.debug(msg)
     except Exception as e:
         print(e)
 
+print("Listening to messages..")
 client.idle()
