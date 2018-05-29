@@ -6,15 +6,16 @@ def setup_logging(service_name):
     from logging import StreamHandler
     from logging.handlers import RotatingFileHandler
 
-    log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
+    filelog_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
+    syslog_formatter = logging.Formatter('%(message)s')
     logFile = os.path.join(LOG_DIR, '%s.log' % service_name)
     file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
                                      backupCount=2, encoding=None, delay=0)
-    file_handler.setFormatter(log_formatter)
+    file_handler.setFormatter(filelog_formatter)
     file_handler.setLevel(logging.DEBUG)
 
     std_handler = StreamHandler(sys.stdout)
-    std_handler.setFormatter(log_formatter)
+    std_handler.setFormatter(syslog_formatter)
     std_handler.setLevel(logging.INFO)
 
     app_log = logging.getLogger('root')
