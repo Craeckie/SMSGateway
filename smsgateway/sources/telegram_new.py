@@ -13,7 +13,8 @@ IDENTIFIER = "TG"
 api_id = 242101
 api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
 
-client = TelegramClient('smsgateway', api_id, api_hash,update_workers=1, spawn_read_thread=False)
+session_path = os.path.join(CONFIG_DIR, 'telegram')
+client = TelegramClient(session_path, api_id, api_hash,update_workers=1, spawn_read_thread=False)
 if not client.start():
     app_log.error("Could not connect! Run python3 -m smsgateway.source.telegram to authorize!")
     sys.exit(1)
