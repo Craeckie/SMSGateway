@@ -1,4 +1,28 @@
-import subprocess, re
+import subprocess, re, os
+from smsgateway.config import *
+
+def setup_logging(service_name):
+    import logging
+    from logging import StreamHandler
+    from logging.handlers import RotatingFileHandler
+
+    log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
+    logFile = os.path.join(LOG_DIR, '%s.log' % service_name)
+    file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
+                                     backupCount=2, encoding=None, delay=0)
+    file_handler.setFormatter(log_formatter)
+    file_handler.setLevel(logging.DEBUG)
+
+    std_handler = StreamHandler(sys.stdout)
+    std_handler.setFormatter(log_formatter)
+    std_handler.setLevel(logging.INFO)
+
+    app_log = logging.getLogger('root')
+    app_log.setLevel(logging.DEBUG)
+    app_log.addHandler(file_handler)
+    app_log.addHandler(std_handler)
+    return app_log
+
 def run_cmd(args, name=None, maxlines=7, timeout=300):
     success = True
     try:
