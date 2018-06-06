@@ -33,7 +33,7 @@ def run(lines):
           app_log.error(ret)
           return ret
 
-      to_matched = m.group(1).replace(' ', '')
+      to_matched = m.group(1).strip()
       print("Matched To: %s" % to_matched)
       to = None
       for x in client.iter_dialogs():

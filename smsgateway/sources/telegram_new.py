@@ -4,6 +4,7 @@ from smsgateway.sources.utils import *
 from smsgateway.config import *
 
 from telethon import TelegramClient, events
+from telethon.tl.types import Chat, User
 from telethon.tl.functions.users import GetFullUserRequest
 
 app_log = setup_logging("telegram")
@@ -29,13 +30,24 @@ def callback(event):
         user_id = event.message.to_id
       else:
         user_id = event.message.from_id
-      user = client(GetFullUserRequest(user_id)).user
 
+      user_name = ""
+      user_entity = client.get_entity(user_id)
+      if isinstance(user_entity, User):
+        #user = client(GetFullUserRequest(user_id)).user
 
-      user_number = user.phone if user.phone else ""
-      user_name = ' '.join([x for x in [user.first_name, user.last_name] if x])
-      if user_number:
-          user_name += " (%s)" % user_number
+        user_number = user_entity.phone if user_entity.phone else ""
+        user_name = ' '.join([x for x in [user_entity.first_name, user_entity.last_name] if x])
+        if user_number:
+            user_name += " (%s)" % user_number
+
+      group_entity = client.get_entity(event.message.to_id)
+      if isinstance(group_entity, Chat):
+          group_name = group_entity.title
+          if event.message.out:
+              user_name = group_name
+          else:
+              user_name += f"@{group_name}"
 
       msg = event.message.message
       if event.message.out:
