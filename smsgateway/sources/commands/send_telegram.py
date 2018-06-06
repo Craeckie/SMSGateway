@@ -7,7 +7,7 @@ command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 def check(cmd, multiline):
     print("Checking %s" % cmd)
-    if cmd.lower() == 'tg' and multiline:
+    if cmd.lower() == 'tg-old' and multiline:
       return True
     else:
       return False
