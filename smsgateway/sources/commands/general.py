@@ -1,4 +1,4 @@
-import re, subprocess, os
+import re, subprocess, os, arrow
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway import sink_sms
@@ -59,9 +59,9 @@ from datetime import timedelta
 def _stat_uptime():
     with open('/proc/uptime', 'r') as f:
         uptime_seconds = float(f.readline().split()[0])
-        uptime_string = str(timedelta(seconds = uptime_seconds))
-
-    return uptime_string
+        #uptime_string = str(timedelta(seconds = uptime_seconds))
+        past = arrow.utcnow().shift(seconds=-uptime_seconds)
+        return past.humanize(only_distance=True)
 
 def _sizeof_fmt(num, suffix='B'):
         for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -71,14 +71,22 @@ def _sizeof_fmt(num, suffix='B'):
         return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def _stat_df():
-  statvfs = os.statvfs('/')
+    statvfs = os.statvfs('/')
 
-  df = _sizeof_fmt(statvfs.f_frsize * statvfs.f_bfree)
-  return df
+    df = _sizeof_fmt(statvfs.f_frsize * statvfs.f_bfree)
+    return df
+
+def _stat_temp():
+    try:
+        with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+          temp = int(f.read())
+          return "%s °C" % str(temp / 1000.)
+    except Exception as e:
+        return "\nCouldn't read temperature: %s" % e
 
 def status(full=False):
     ret = 'Status of SMSGateway:\n'
-    ret += 'Uptime: %s\n' % _stat_uptime()
+    ret += 'Uptime: %s, Temp: %s\n' % (_stat_uptime(), _stat_temp())
     ret += 'Free space: %s\n' % _stat_df()
     net_inf = NETWORK_INTERFACES_ALL if full else NETWORK_INTERFACES
     wifi_inf = WIFI_INTERFACES_ALL if full else WIFI_INTERFACES
