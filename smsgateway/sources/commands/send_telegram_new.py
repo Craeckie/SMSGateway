@@ -9,7 +9,7 @@ command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 api_id = 242101
 api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
 
-    session_path = os.path.join(CONFIG_DIR, 'telegram-new')
+session_path = os.path.join(CONFIG_DIR, 'telegram-new')
 
 def check(cmd, multiline):
     print("Checking %s" % cmd)
