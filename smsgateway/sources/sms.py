@@ -134,7 +134,7 @@ def main():
       elif args.event == 'FAILED':
         if args.file:
           app_log.warning("SMS failed. Process:")
-          app_log.warning("- Stopping smstools.. ", end='')
+          app_log.warning("- Stopping smstools.. ")
           (result, out) = run_cmd([SUDO_PATH, SYSTEMCTL_PATH, 'stop', 'smstools'])
           if result == 0:
             app_log.info("Success!")
