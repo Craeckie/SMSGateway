@@ -13,10 +13,11 @@ def send_notif(text):
     send_to(CONTROL_PHONES[0], text)
 
 def send_to(to, text):
-    m = "To: %s\n\n%s" % (to, text)
+    header = '\n'.join([f"To: {to}", "Alphabet: UCS-2", ""])
     d = datetime.datetime.now().strftime("%y-%m-%d_%H-%M-%S.%f")[:-3]
     p = os.path.join(SMS_DIR, d)
     print("Writing sms to %s" % p)
-    with open(p, 'w') as f:
-        f.write(m)
+    with open(p, 'wb') as f:
+        f.write(header.encode("UTF-8"))
+        f.write(text.encode("utf-16-be"))
         f.flush()
