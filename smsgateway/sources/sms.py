@@ -56,23 +56,29 @@ def handleSMS(f):
     From = None
     textStarted = False
     text = ''
-    with open(f, 'r', encoding="8859") as f:
+    with open(f, 'rb') as f:
       app_log.info("Opened received SMS")
-      for line in f:
+      lines = f.readlines()
+      for line in lines:
+        if textStarted == True:
+          line = line.decode("utf-16-be")
+        else:
+          line = line.decode("UTF-8")
+            
         line = line.rstrip()
         m = re.match("From: ([0-9]+)", line)
         m2 = re.match("From: ([A-Za-z0-9]+)", line)
         if textStarted == True:
-          text += "%s\n" % line
+            text += "%s\n" % line
         elif m or m2:
-          if m:
-            From = "+%s" % m.group(1)
-          else:
-            From = "%s" % m2.group(1)
-            app_log.info("Number is not numeric!")
-          app_log.info("From: %s" % From)
+            if m:
+              From = "+%s" % m.group(1)
+            else:
+              From = "%s" % m2.group(1)
+              app_log.info("Number is not numeric!")
+            app_log.info("From: %s" % From)
         elif line == "":
-          textStarted = True
+            textStarted = True
     if From and textStarted:
       if From in ['+%s' % num for num in CONTROL_PHONES]:
         handleCommand(text)
@@ -134,7 +140,7 @@ def main():
       elif args.event == 'FAILED':
         if args.file:
           app_log.warning("SMS failed. Process:")
-          app_log.warning("- Stopping smstools.. ")
+          app_log.warning("- Stopping smstools.. ", end='')
           (result, out) = run_cmd([SUDO_PATH, SYSTEMCTL_PATH, 'stop', 'smstools'])
           if result == 0:
             app_log.info("Success!")
