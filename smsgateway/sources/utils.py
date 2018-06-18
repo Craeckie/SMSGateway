@@ -57,7 +57,14 @@ def replaceEmoticons(text):
   text = _repl(r'\U0001F914', ':-?', text)
   # text = _repl(r'\U0001F602', ':-D', text)
   text = _repl(r'\U0001F604', ':-D', text)
-  if use_emoji: 
+  if use_emoji:
     return emoji.demojize(text)
   else:
     return text
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)

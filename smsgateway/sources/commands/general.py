@@ -63,17 +63,11 @@ def _stat_uptime():
         past = arrow.utcnow().shift(seconds=-uptime_seconds)
         return past.humanize(only_distance=True)
 
-def _sizeof_fmt(num, suffix='B'):
-        for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-          if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
-          num /= 1024.0
-        return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def _stat_df():
     statvfs = os.statvfs('/')
 
-    df = _sizeof_fmt(statvfs.f_frsize * statvfs.f_bfree)
+    df = sizeof_fmt(statvfs.f_frsize * statvfs.f_bfree)
     return df
 
 def _stat_temp():

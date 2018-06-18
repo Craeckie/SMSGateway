@@ -4,7 +4,10 @@ from smsgateway.sources.utils import *
 from smsgateway.config import *
 
 from telethon import TelegramClient, events
-from telethon.tl.types import Chat, User, MessageMediaGeo, MessageMediaContact, MessageMediaPhoto
+from telethon.tl.types import Chat, User, \
+  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
+  MessageMediaDocument, MessageMediaWebPage, \
+  Document, DocumentAttributeFilename, DocumentAttributeSticker
 from telethon.tl.functions.users import GetFullUserRequest
 
 app_log = setup_logging("telegram")
@@ -33,6 +36,66 @@ def get_user_name(user_id):
       if user_number:
           user_name += " (%s)" % user_number
     return user_name
+
+def parseMedia(media, msg):
+    if msg:
+        msg += "\n"
+    if isinstance(media, MessageMediaGeo):
+        geo = media.geo
+        msg += f"https://osmand.net/go?lat={geo.lat}&lon={geo.long}&z=15"
+    elif isinstance(media, MessageMediaPhoto):
+        photo = media.photo
+        msg += "Media: Photo"
+        if photo.sizes:
+            largest = [s for s in photo.sizes if s.type == 'y']
+            if len(largest) >= 1:
+                largest = largest[0]
+                msg += f" ({largest.w}x{largest.h})"
+    elif isinstance(media, MessageMediaContact):
+        msg += "Media: Contact\n"
+        if media.first_name or media.last_name:
+            msg += f"Name:"
+            if media.first_name:
+                msg += f" {media.first_name}"
+            if media.last_name:
+                msg += f" {media.last_name}"
+            msg += "\n"
+        if media.phone_number:
+            msg += f"Phone: {media.phone_number}"
+    elif isinstance(media, MessageMediaDocument):
+        document = media.document
+        filename = None
+        if document.attributes:
+            filename = [attr.file_name for attr in document.attributes if isinstance(attr, DocumentAttributeFilename)]
+            if len(filename) > 0:
+                filename = filename[0]
+        if isinstance(document, Document) and document.mime_type == "image/webp":
+            msg += "Sticker"
+            alt_smiley = [attr.alt for attr in document.attributes if isinstance(attr, DocumentAttributeSticker)]
+            if len(alt_smiley) > 0:
+                msg += f": {alt_smiley[0]}"
+            msg += "\n"
+        else:
+          msg += "Media: "
+          if document.mime_type.startswith("video"):
+              if filename == "giphy.mp4":
+                msg += "GIF\n"
+              else:
+                msg += "Video\n"
+          else:
+              msg += "Media: File\n"
+          if filename:
+            msg += f"Filename: {filename}\n"
+          if document.size:
+              size = sizeof_fmt(document.size)
+              msg += f"Size: {size}\n"
+    elif isinstance(media, MessageMediaWebPage):
+        webpage = media.webpage
+        msg += "Media: Webpage\n"
+        msg += f"> {webpage.site_name}\n> {webpage.title}\n> {webpage.description}\n\n"
+    else:
+        msg += "Media: Unknown"
+    return msg
 
 @client.on(events.NewMessage())
 def callback(event):
@@ -63,34 +126,11 @@ def callback(event):
       # if event.message.reply_to_msg_id:
       #     for message in client.iter_messages('username', limit=10):
       msg += event.message.message
+
       media = event.message.media
       if media:
-          if msg:
-              msg += "\n"
-          if isinstance(media, MessageMediaGeo):
-              geo = media.geo
-              msg += f"https://osmand.net/go?lat={geo.lat}&lon={geo.long}&z=15"
-          elif isinstance(media, MessageMediaPhoto):
-              photo = media.photo
-              msg += "Media: Photo"
-              if photo.sizes:
-                  largest = [s for s in photo.sizes if s.type == 'y']
-                  if len(largest) >= 1:
-                      largest = largest[0]
-                      msg += f" ({largest.w}x{largest.h})"
-          elif isinstance(media, MessageMediaContact):
-              msg += "Media: Contact\n"
-              if media.first_name or media.last_name:
-                  msg += f"Name:"
-                  if media.first_name:
-                      msg += f" {media.first_name}"
-                  if media.last_name:
-                      msg += f" {media.last_name}"
-                  msg += "\n"
-              if media.phone_number:
-                  msg += f"Phone: {media.phone_number}"
-          else:
-              msg += "Media: Unknown"
+          msg = parseMedia(media, msg)
+
       if event.message.out:
           app_log.info("New message to %s!" % user_name)
           sink_sms.send_from_me(IDENTIFIER, user_name, msg)
