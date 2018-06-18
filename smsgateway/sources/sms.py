@@ -11,12 +11,12 @@ src_path = os.path.dirname(os.path.abspath(__file__))
 
 command_list = []
 mods = []
-app_log.info(src_path)
+
 for file in os.listdir(os.path.join(src_path, 'commands')):
       ext_file = os.path.splitext(file)
 
       if ext_file[1] == '.py' and not ext_file[0] == '__init__':
-          app_log.info("Importing %s" % ext_file[0])
+          app_log.debug("Importing %s" % ext_file[0])
           m = importlib.import_module('smsgateway.sources.commands.' + ext_file[0])
           mods.append(m)
 
@@ -55,19 +55,21 @@ def handleSMS(f):
     app_log.info("Received SMS, file: %s" % f)
     From = None
     textStarted = False
+    decodeUCS2 = False
     text = ''
     with open(f, 'rb') as f:
       app_log.info("Opened received SMS")
       lines = f.readlines()
       for line in lines:
-        if textStarted == True:
+        if textStarted == True and decodeUCS2:
           line = line.decode("utf-16-be")
         else:
           line = line.decode("UTF-8")
-            
+
         line = line.rstrip()
         m = re.match("From: ([0-9]+)", line)
         m2 = re.match("From: ([A-Za-z0-9]+)", line)
+        mAlpha = re.match("Alphabet: ([A-Z0-9]+)", line)
         if textStarted == True:
             text += "%s\n" % line
         elif m or m2:
@@ -77,6 +79,12 @@ def handleSMS(f):
               From = "%s" % m2.group(1)
               app_log.info("Number is not numeric!")
             app_log.info("From: %s" % From)
+        elif mAlpha:
+            alpha = mAlpha.group(1)
+            if alpha == "UCS2":
+                decodeUCS2 = True
+            elif alpha == "ISO":
+                decodeUCS2 = False
         elif line == "":
             textStarted = True
     if From and textStarted:
@@ -127,6 +135,7 @@ def resendSMS(f):
       sink_sms.send_notif(new_text)
 
 def main():
+    app_log.info(src_path)
     parser = argparse.ArgumentParser()
     parser.add_argument("event")
     parser.add_argument("file")
