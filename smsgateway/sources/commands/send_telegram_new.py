@@ -1,15 +1,18 @@
 import re, json
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
+from smsgateway.sources.utils import *
 from smsgateway import sink_sms
 from telethon import TelegramClient, utils
+
+app_log = setup_logging("telegram-send")
 
 command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 api_id = 242101
 api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
 
-session_path = os.path.join(CONFIG_DIR, 'telegram-new')
+session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
 def check(cmd, multiline):
     print("Checking %s" % cmd)
