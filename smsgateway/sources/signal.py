@@ -27,7 +27,7 @@ def listen():
                 if dataMsg:
                     msg = dataMsg['message']
                     app_log.info("From: %s\n\n%s\n" % (source, msg))
-                    sink_sms.send(IDENTIFIER, source, msg)
+                    sink_sms.send(IDENTIFIER, msg, source)
                 elif syncMsg and source == SIGNAL_NUMBER:
                     msg = syncMsg['message']
                     app_log.info("From: %s\n\n%s\n" % (source, msg))

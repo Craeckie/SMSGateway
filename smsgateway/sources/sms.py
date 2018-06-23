@@ -92,7 +92,7 @@ def handleSMS(f):
         handleCommand(text)
         return
       app_log.info("Sending SMS")
-      sink_sms.send("SMS", From, text)
+      sink_sms.send("SMS", text, From)
     else:
       app_log.error("Couldn't parse incoming sms!")
 

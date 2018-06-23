@@ -1,13 +1,27 @@
 import datetime, os
 from smsgateway.config import *
 
-def send(type, _from, text):
-    t = "%s\nFrom: %s\n%s" % (type, _from, text)
-    send_to(CONTROL_PHONES[0], t)
+def send(type, text, _from, group=None):
+    lines = [
+        type,
+        f"From: {_from}"
+    ]
+    if group:
+        lines += [f"Group: {group}"]
+    lines += [
+        "",
+        text
+    ]
+    send_to(CONTROL_PHONES[0], '\n'.join(lines))
 
-def send_from_me(type, to, text):
-    t = "%s\nTo: %s\n%s" % (type, to, text)
-    send_to(CONTROL_PHONES[0], t)
+def send_from_me(type, text, to):
+    lines = [
+        type,
+        f"To: {to}",
+        "",
+        text
+    ]
+    send_to(CONTROL_PHONES[0], '\n'.join(lines))
 
 def send_notif(text):
     send_to(CONTROL_PHONES[0], text)

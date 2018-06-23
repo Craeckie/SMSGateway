@@ -22,7 +22,7 @@ class EchoBot(Client):
                     break
 
             print("From: %s\n\n%s\n" % (source_name, message))
-            sink_sms.send(IDENTIFIER, source_name, message)
+            sink_sms.send(IDENTIFIER, message, source_name)
 #            self.sendMessage(message, thread_id=thread_id, thread_type=thread_type)
 
 session_cookies = None

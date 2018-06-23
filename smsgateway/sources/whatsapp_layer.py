@@ -54,7 +54,7 @@ class EchoLayer(YowInterfaceLayer):
                 g_alias = self.gidToAlias(g)
                 alias += '@' + g_alias
             print("From: %s\nMessage: %s" % (alias, t))
-            sink_sms.send(IDENTIFIER, f, t)
+            sink_sms.send(IDENTIFIER, t, f)
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):

@@ -23,7 +23,7 @@ def listen():
 
           if from_id != TG_USER_ID:
             app_log.info("Forwarding message:\n%s" % m)
-            sink_sms.send(IDENTIFIER, f, m)
+            sink_sms.send(IDENTIFIER, m, f)
           else:
             app_log.info("Forwarding message from myself:\n%s" % m)
             sink_sms.send_from_me(IDENTIFIER, to, m)

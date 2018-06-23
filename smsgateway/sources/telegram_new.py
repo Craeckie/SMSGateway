@@ -107,14 +107,15 @@ def callback(event):
         user_id = event.message.from_id
 
       user_name = get_user_name(user_id)
+      group_name = None
 
       group_entity = client.get_entity(event.message.to_id)
       if isinstance(group_entity, Chat):
           group_name = group_entity.title
           if event.message.out:
               user_name = group_name
-          else:
-              user_name += f"@{group_name}"
+          # else:
+          #     user_name += f"@{group_name}"
 
       msg = ""
 
@@ -133,10 +134,10 @@ def callback(event):
 
       if event.message.out:
           app_log.info("New message to %s!" % user_name)
-          sink_sms.send_from_me(IDENTIFIER, user_name, msg)
+          sink_sms.send_from_me(IDENTIFIER, msg, user_name)
       else:
           app_log.info("New message from %s!" % user_name)
-          sink_sms.send(IDENTIFIER, user_name, msg)
+          sink_sms.send(IDENTIFIER, msg, user_name, group_name)
       app_log.debug(msg)
     except Exception as e:
         app_log.warning(e)
