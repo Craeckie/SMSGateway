@@ -31,6 +31,7 @@ def handleCommand(text):
   multiline = len(lines) > 1
   for c in mods:
       if c.check(cmd, multiline):
+          print(f"Mod {c} matched :)")
           try:
               ret = c.run(lines)
           except Exception as e:
@@ -48,7 +49,6 @@ def handleCommand(text):
   #     else:
   #       print("Couldn't match To: %s" % to)
   if ret:
-    app_log.info("Sending SMS:\n%s" % ret)
     sink_sms.send_to(to, ret)
 
 def handleSMS(f):
@@ -87,12 +87,13 @@ def handleSMS(f):
                 decodeUCS2 = False
         elif line == "":
             textStarted = True
+
     if From and textStarted:
       if From in ['+%s' % num for num in CONTROL_PHONES]:
         handleCommand(text)
-        return
-      app_log.info("Sending SMS")
-      sink_sms.send("SMS", text, From)
+      else: # SMS from someone else
+        app_log.info("Sending SMS")
+        sink_sms.send("SMS", text, From)
     else:
       app_log.error("Couldn't parse incoming sms!")
 

@@ -6,7 +6,7 @@ from smsgateway import sink_sms
 command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 def check(cmd, multiline):
-    print("Checking %s" % cmd)
+    # print("Checking %s" % cmd)
     if cmd.lower() == 'tg-old' and multiline:
       return True
     else:

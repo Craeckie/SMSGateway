@@ -7,6 +7,8 @@ from telethon import TelegramClient, utils
 
 app_log = setup_logging("telegram-send")
 
+IDENTIFIER = "TG"
+
 command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 api_id = 242101
@@ -15,8 +17,8 @@ api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
 session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
 def check(cmd, multiline):
-    print("Checking %s" % cmd)
-    if cmd.lower() == 'tg' and multiline:
+    # print("Checking %s" % cmd)
+    if cmd.lower() == IDENTIFIER.lower() and multiline:
       return True
     else:
       return False
@@ -24,9 +26,24 @@ def check(cmd, multiline):
 
 def run(lines):
     print("Forwarding Telegram Message")
-    toL = lines[1]
-    m = re.match("To: (.*)$", toL)
-    if m:
+    messageStarted = False
+    to_matched = None
+    message = ""
+
+    for line in lines[1:]: # skip IDENTIFIER
+        if messageStarted:
+            message += f"\n{line}"
+        elif not line.strip(): # empty line
+            messageStarted = True
+            message += line
+        else:
+            mTo = re.match("To: (.*)$", line)
+            if mTo:
+                to_matched = mTo.group(1).strip()
+            else:
+                app_log.warning(f"Unkown header: {line}!")
+
+    if to_matched and message:
       print("Starting client..")
       client = TelegramClient(session_path, api_id, api_hash)
       try:
@@ -36,8 +53,6 @@ def run(lines):
           app_log.error(ret)
           return ret
 
-      to_matched = m.group(1).strip()
-      print("Matched To: %s" % to_matched)
       to = None
       for x in client.iter_dialogs():
           name = utils.get_display_name(x.entity)
@@ -48,16 +63,21 @@ def run(lines):
       if not to:
           print(f"Couldn't find {to}! Trying directly..")
           to = name = to_matched
-      msg = '\n'.join(lines[2:])
-      print("Sending Telegram msg:\n%s" % msg)
+
+      print("Sending Telegram msg:\n%s" % message)
       # arg = "msg %s %s" % (to, msg)
       # print("Calling Telegram with %s" % arg)
       import getpass
       print("I am: %s" % getpass.getuser())
 
-      client.send_message(to, msg)
+      client.send_message(to, message)
       client.disconnect()
-      ret = f"TG\nTo: {name}\n{msg}"
+      ret = '\n'.join([
+        IDENTIFIER,
+        f"To: {name}",
+        "",
+        message
+      ])
       # try:
       #     #res = subprocess.check_output(["sudo", "-Hu", "pi", "/home/pi/tg/bin/telegram-cli", "-D", "--json", "-RW", "-e", arg], stderr=subprocess.STDOUT).decode('UTF-8').strip()
       #     res = subprocess.check_output([TELEGRAM_CLI_PATH, "-D", "--json", "-k", TELEGRAM_KEY_PATH, "--profile", "profile_send", "-RW", "-e", arg], stderr=subprocess.STDOUT, timeout=300).decode('UTF-8').strip()
@@ -87,7 +107,7 @@ def run(lines):
       # else:
       #   ret = "Failed to send TG to %s!" % to
     else:
-      ret = "Couldn't match To: %s" % toL
+      ret = "Couldn't match To: %s" % to_matched
       print(ret)
     return ret
 

@@ -19,7 +19,7 @@ command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 
 def check(cmd, multiline):
-    app_log.info("Checking %s" % cmd)
+    # app_log.info("Checking %s" % cmd)
     if cmd.lower() == 'sg' and multiline:
       return True
     else:

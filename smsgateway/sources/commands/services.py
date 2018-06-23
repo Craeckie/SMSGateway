@@ -16,7 +16,7 @@ def match(cmd):
     return (c, s)
 
 def check(cmd, multiline):
-    print("Checking %s" % cmd)
+    # print("Checking %s" % cmd)
 
     if service_regex.match(cmd):
       print("Service RE matches!")
