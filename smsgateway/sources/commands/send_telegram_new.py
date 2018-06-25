@@ -107,7 +107,7 @@ def run(lines):
       # else:
       #   ret = "Failed to send TG to %s!" % to
     else:
-      ret = "Couldn't match To: %s" % to_matched
+      ret = f"Couldn't match To: {to_matched} or message {message}"
       print(ret)
     return ret
 

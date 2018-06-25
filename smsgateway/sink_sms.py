@@ -1,13 +1,15 @@
 import datetime, os
 from smsgateway.config import *
 
-def send(type, text, _from, group=None):
+def send(type, text, _from, phone=None, group=None):
     lines = [
         type,
         f"From: {_from}"
     ]
     if group:
         lines += [f"Group: {group}"]
+    if phone:
+        lines += [f"Phone: {phone}"]
     lines += [
         "",
         text

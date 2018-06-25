@@ -64,7 +64,7 @@ def handleSMS(f):
         if textStarted == True and decodeUCS2:
           line = line.decode("utf-16-be")
         else:
-          line = line.decode("UTF-8")
+          line = line.decode("iso8859-15")
 
         line = line.rstrip()
         m = re.match("From: ([0-9]+)", line)

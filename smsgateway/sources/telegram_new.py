@@ -25,17 +25,18 @@ if not client.start():
 
 app_log.info("Started TelegramClient")
 
-def get_user_name(user_id):
+def get_user_info(user_id):
     user_name = ""
+    user_number = None
     user_entity = client.get_entity(user_id)
     if isinstance(user_entity, User):
       #user = client(GetFullUserRequest(user_id)).user
-
-      user_number = user_entity.phone if user_entity.phone else ""
+      if user_entity.phone:
+          user_number = user_entity.phone
       user_name = ' '.join([x for x in [user_entity.first_name, user_entity.last_name] if x])
-      if user_number:
-          user_name += " (%s)" % user_number
-    return user_name
+      # if user_number:
+      #     user_name += " (%s)" % user_number
+    return (user_name, user_number)
 
 def parseMedia(media, msg):
     if msg:
@@ -106,7 +107,7 @@ def callback(event):
       else:
         user_id = event.message.from_id
 
-      user_name = get_user_name(user_id)
+      (user_name, user_number) = get_user_info(user_id)
       group_name = None
 
       group_entity = client.get_entity(event.message.to_id)
@@ -114,14 +115,12 @@ def callback(event):
           group_name = group_entity.title
           if event.message.out:
               user_name = group_name
-          # else:
-          #     user_name += f"@{group_name}"
 
       msg = ""
 
       if event.message.fwd_from:
           from_id = event.message.from_id
-          from_name = get_user_name(from_id)
+          (from_name, from_number) = get_user_info(from_id)
           msg += f"Forwarded from {from_name}:\n"
 
       # if event.message.reply_to_msg_id:
@@ -137,7 +136,7 @@ def callback(event):
           sink_sms.send_from_me(IDENTIFIER, msg, user_name)
       else:
           app_log.info("New message from %s!" % user_name)
-          sink_sms.send(IDENTIFIER, msg, user_name, group_name)
+          sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
       app_log.debug(msg)
     except Exception as e:
         app_log.warning(e)
