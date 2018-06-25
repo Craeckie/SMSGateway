@@ -14,6 +14,7 @@ setuptools.setup(
     install_requires=[
         "emoji",
         "appdirs",
-        "telethon"
+        "telethon",
+        "fbchat"
     ]
 )
