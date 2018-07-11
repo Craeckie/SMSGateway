@@ -113,7 +113,6 @@ def get_channel_info(entity):
 @client.on(events.MessageEdited())
 def callback(event):
     try:
-      print(event.stringify())
       if event.message.out:
         user_id = event.message.to_id
       else:
@@ -181,6 +180,7 @@ def callback(event):
       app_log.debug(msg)
     except Exception as e:
         app_log.warning(traceback.format_exc())
+        app_log.warning(event.stringify())
 
 app_log.info("Catching up..")
 
