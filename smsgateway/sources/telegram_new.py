@@ -1,10 +1,10 @@
-import sys, os, signal
+import sys, os, signal, traceback
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 from smsgateway.config import *
 
 from telethon import TelegramClient, events
-from telethon.tl.types import Chat, User, \
+from telethon.tl.types import Chat, User, Channel, \
   MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
   MessageMediaDocument, MessageMediaWebPage, \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
@@ -25,18 +25,6 @@ if not client.start():
 
 app_log.info("Started TelegramClient")
 
-def get_user_info(user_id):
-    user_name = ""
-    user_number = None
-    user_entity = client.get_entity(user_id)
-    if isinstance(user_entity, User):
-      #user = client(GetFullUserRequest(user_id)).user
-      if user_entity.phone:
-          user_number = user_entity.phone
-      user_name = ' '.join([x for x in [user_entity.first_name, user_entity.last_name] if x])
-      # if user_number:
-      #     user_name += " (%s)" % user_number
-    return (user_name, user_number)
 
 def parseMedia(media, msg):
     if msg:
@@ -98,30 +86,81 @@ def parseMedia(media, msg):
         msg += "Media: Unknown"
     return msg
 
-@client.on(events.NewMessage())
-def callback(event):
+def get_user_info(entity):
+    info = {}
+    if isinstance(entity, User):
+      #user = client(GetFullUserRequest(user_id)).user
+      if entity.phone:
+          info['phone'] = entity.phone
+      info['name'] = ' '.join([x for x in [entity.first_name, entity.last_name] if x])
+      # if user_number:
+      #     user_name += " (%s)" % user_number
+    return info
 
+def get_chat_info(id):
+    entity = client.get_entity(id)
+    info = {}
+    if isinstance(entity, Chat):
+        info['group'] = entity.title
+    elif isinstance(entity, Channel):
+        info['channel'] = entity.title
+    return info
+def get_channel_info(entity):
+    info = {}
+    return info
+
+@client.on(events.NewMessage())
+@client.on(events.MessageEdited())
+def callback(event):
     try:
+      print(event.stringify())
       if event.message.out:
         user_id = event.message.to_id
       else:
         user_id = event.message.from_id
 
-      (user_name, user_number) = get_user_info(user_id)
-      group_name = None
+      chat_info = {'ID': event.message.id}
 
-      group_entity = client.get_entity(event.message.to_id)
-      if isinstance(group_entity, Chat):
-          group_name = group_entity.title
-          if event.message.out:
-              user_name = group_name
+      user_entity = client.get_entity(user_id)
+      user_info = get_user_info(user_entity)
+      if 'name' in user_info:
+        chat_info['to' if event.message.out else 'from'] = user_info['name']
+      if 'phone' in user_info:
+        chat_info['phone'] = user_info['phone']
 
+      group_info = get_chat_info(event.message.to_id)
+      if group_info:
+        # if event.message.out: # if sent to group/channel, get name
+        for key in ['group', 'channel']:
+          if key in group_info:
+              chat_info['group'] = group_info[key]
+              if event.message.out:
+                  chat_info['to'] = group_info[key]
+        # else: # from someone else
+        #     chat_info['from'] =
+      # if isinstance(group_entity, Chat):
+      #     chat_info['group'] = group_entity.title
+      #     if event.message.out:
+      #         user_name = chat_info['group']
+      # elif isinstance(group_entity, Channel):
+      #     chat_info['channel'] = group_entity.title
+      #     if event.message.out:
+      #         user_name = chat_info['channel']
+      if event.message.edit_date:
+          chat_info['edit'] = "True"
       msg = ""
 
       if event.message.fwd_from:
-          from_id = event.message.from_id
-          (from_name, from_number) = get_user_info(from_id)
-          msg += f"Forwarded from {from_name}:\n"
+          fwd_from = event.message.fwd_from
+          if fwd_from.from_id:
+              user_info = get_user_info(from_id)
+          elif fwd_from.channel_id:
+              user_info = get_chat_info(fwd_from.channel_id)
+          msg += f"Forwarded from {user_info['name']}:\n"
+          # if 'name' in user_info:
+          #   chat_info['from_name'] = user_info['name']
+          # if 'phone' in user_info:
+          #   chat_info['from_phone'] = user_info['phone']
 
       # if event.message.reply_to_msg_id:
       #     for message in client.iter_messages('username', limit=10):
@@ -132,14 +171,16 @@ def callback(event):
           msg = parseMedia(media, msg)
 
       if event.message.out:
-          app_log.info("New message to %s!" % user_name)
-          sink_sms.send_from_me(IDENTIFIER, msg, user_name)
+          app_log.info("New message to %s!" % chat_info['to'])
+          sink_sms.send_dict(IDENTIFIER, msg, chat_info)
+          # sink_sms.send_from_me(IDENTIFIER, msg, chat_info['to'])
       else:
-          app_log.info("New message from %s!" % user_name)
-          sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
+          app_log.info("New message from %s!" % chat_info['from'])
+          sink_sms.send_dict(IDENTIFIER, msg, chat_info)
+          # sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
       app_log.debug(msg)
     except Exception as e:
-        app_log.warning(e)
+        app_log.warning(traceback.format_exc())
 
 app_log.info("Catching up..")
 
