@@ -7,7 +7,7 @@ from telethon import TelegramClient, events
 from telethon.tl.types import Chat, User, Channel, \
   PeerUser, PeerChat, PeerChannel, \
   MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
-  MessageMediaDocument, MessageMediaWebPage, WebPageEmpty \
+  MessageMediaDocument, MessageMediaWebPage, WebPageEmpty, \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
 from telethon.tl.functions.users import GetFullUserRequest
 
