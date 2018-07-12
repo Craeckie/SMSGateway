@@ -2,7 +2,8 @@ import datetime, os
 from smsgateway.config import *
 
 def send_dict(type, text, headers):
-    msg = '\n'.join([f"{k.capitalize()}: {v}" for k,v in headers.items()])
+    msg = f"{type}\n"
+    msg += '\n'.join([f"{k.capitalize()}: {v}" for k,v in headers.items()])
     msg += f"\n\n{text}"
     send_to(CONTROL_PHONES[0], msg)
 def send(type, text, _from, phone=None, group=None):
