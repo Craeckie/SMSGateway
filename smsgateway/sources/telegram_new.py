@@ -112,13 +112,13 @@ def get_channel_info(entity):
 @client.on(events.NewMessage())
 @client.on(events.MessageEdited())
 def callback(event):
+    chat_info = {'ID': event.message.id}
     try:
-      if event.message.out:
+      if event.message.out or not event.message.from_id:
         user_id = event.message.to_id
       else:
         user_id = event.message.from_id
 
-      chat_info = {'ID': event.message.id}
 
       user_entity = client.get_entity(user_id)
       user_info = get_user_info(user_entity)
@@ -129,12 +129,13 @@ def callback(event):
 
       group_info = get_chat_info(event.message.to_id)
       if group_info:
+        chat_info.update(group_info)
         # if event.message.out: # if sent to group/channel, get name
-        for key in ['group', 'channel']:
-          if key in group_info:
-              chat_info['group'] = group_info[key]
-              if event.message.out:
-                  chat_info['to'] = group_info[key]
+        # for key in ['group', 'channel']:
+        #   if key in group_info:
+        #       chat_info['group'] = group_info[key]
+        #       if event.message.out:
+        #           chat_info['to'] = group_info[key]
         # else: # from someone else
         #     chat_info['from'] =
       # if isinstance(group_entity, Chat):
@@ -170,17 +171,24 @@ def callback(event):
           msg = parseMedia(media, msg)
 
       if event.message.out:
-          app_log.info("New message to %s!" % chat_info['to'])
+          for key in ['to', 'group', 'channel']:
+            if key in chat_info:
+              app_log.info("New message to %s!" % chat_info[key])
+              break
           sink_sms.send_dict(IDENTIFIER, msg, chat_info)
           # sink_sms.send_from_me(IDENTIFIER, msg, chat_info['to'])
       else:
-          app_log.info("New message from %s!" % chat_info['from'])
+          for key in ['from', 'group', 'channel']:
+            if key in chat_info:
+              app_log.info("New message from %s!" % chat_info[key])
+              break
           sink_sms.send_dict(IDENTIFIER, msg, chat_info)
           # sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
       app_log.debug(msg)
     except Exception as e:
         app_log.warning(traceback.format_exc())
         app_log.warning(event.stringify())
+        app_log.warning(str(chat_info))
 
 app_log.info("Catching up..")
 
