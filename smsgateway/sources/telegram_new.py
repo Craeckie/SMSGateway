@@ -101,7 +101,11 @@ def get_outgoing_info(id):
     info = {}
     entity = yield from client.get_entity(id)
     if isinstance(entity, User):
-      (info['to'], info['phone']) = get_user_info(entity)
+      (name, phone) = get_user_info(entity)
+      if name:
+          info['to'] = name
+      if phone:
+          info['phone'] = phone
       info['type'] = 'User'
     elif isinstance(entity, Chat):
         info['to'] = entity.title
@@ -125,6 +129,7 @@ def get_incoming_info(from_id, to_id):
             info['from'] = name
         if phone:
             info['phone'] = phone
+        info['type'] = 'User'
       elif isinstance(from_entity, Channel):
         info['from'] = from_entity.title
         info['type'] = 'Channel'
