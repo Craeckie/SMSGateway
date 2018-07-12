@@ -1,12 +1,13 @@
-import sys, os, signal, traceback
+import asyncio, sys, os, signal, traceback
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 from smsgateway.config import *
 
 from telethon import TelegramClient, events
 from telethon.tl.types import Chat, User, Channel, \
+  PeerUser, PeerChat, PeerChannel, \
   MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
-  MessageMediaDocument, MessageMediaWebPage, \
+  MessageMediaDocument, MessageMediaWebPage, WebPageEmpty \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
 from telethon.tl.functions.users import GetFullUserRequest
 
@@ -16,9 +17,9 @@ IDENTIFIER = "TG"
 
 api_id = 242101
 api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
-
 session_path = os.path.join(CONFIG_DIR, 'telegram')
-client = TelegramClient(session_path, api_id, api_hash,update_workers=1, spawn_read_thread=False)
+
+client = TelegramClient(session_path, api_id, api_hash) #,update_workers=1, spawn_read_thread=False)
 if not client.start():
     app_log.error("Could not connect! Run python3 -m smsgateway.sources.telegram to authorize!")
     sys.exit(1)
@@ -79,88 +80,96 @@ def parseMedia(media, msg):
               size = sizeof_fmt(document.size)
               msg += f"Size: {size}\n"
     elif isinstance(media, MessageMediaWebPage):
-        webpage = media.webpage
         msg += "Media: Webpage\n"
-        msg += f"> {webpage.site_name}\n> {webpage.title}\n> {webpage.description}\n\n"
+        webpage = media.webpage
+        if not isinstance(webpage, WebPageEmpty):
+          msg += f"> {webpage.site_name}\n> {webpage.title}\n> {webpage.description}\n\n"
     else:
         msg += "Media: Unknown"
     return msg
 
 def get_user_info(entity):
+  user_name = None
+  user_phone = None
+  if entity.phone:
+      user_phone = entity.phone
+  user_name = ' '.join([x for x in [entity.first_name, entity.last_name] if x])
+  return (user_name, user_phone)
+
+@asyncio.coroutine
+def get_outgoing_info(id):
     info = {}
+    entity = yield from client.get_entity(id)
     if isinstance(entity, User):
-      #user = client(GetFullUserRequest(user_id)).user
-      if entity.phone:
-          info['phone'] = entity.phone
-      info['name'] = ' '.join([x for x in [entity.first_name, entity.last_name] if x])
-      # if user_number:
-      #     user_name += " (%s)" % user_number
+      (info['to'], info['phone']) = get_user_info(entity)
+      info['type'] = 'User'
+    elif isinstance(entity, Chat):
+        info['to'] = entity.title
+        info['type'] = 'Group'
+    elif isinstance(entity, Channel):
+        info['to'] = entity.title
+        info['type'] = 'Channel'
+    else:
+        app_log.warning(f"Unknown entity type for id {to_id}!")
     return info
 
-def get_chat_info(id):
-    entity = client.get_entity(id)
+@asyncio.coroutine
+def get_incoming_info(from_id, to_id):
+    from_entity = yield from client.get_entity(from_id) if from_id else None
+    to_entity = yield from client.get_entity(to_id) if to_id else None
     info = {}
-    if isinstance(entity, Chat):
-        info['group'] = entity.title
-    elif isinstance(entity, Channel):
-        info['channel'] = entity.title
-    return info
-def get_channel_info(entity):
-    info = {}
+    if from_entity:
+      if isinstance(from_entity, User):
+        (name, phone) = get_user_info(from_entity)
+        if name:
+            info['from'] = name
+        if phone:
+            info['phone'] = phone
+      elif isinstance(from_entity, Channel):
+        info['from'] = from_entity.title
+        info['type'] = 'Channel'
+      else:
+          app_log.warning(f"Unknown entity type for id {from_id}!")
+    if to_entity:
+      if isinstance(to_entity, Chat):
+          info['to'] = to_entity.title
+          info['type'] = 'Group'
+      elif isinstance(to_entity, Channel):
+        info['to'] = to_entity.title
+        info['type'] = 'Channel'
+      else:
+          app_log.warning(f"Unknown entity type for id {to_id}!")
     return info
 
 @client.on(events.NewMessage())
 @client.on(events.MessageEdited())
-def callback(event):
+async def callback(event):
     chat_info = {'ID': event.message.id}
     try:
-      if event.message.out or not event.message.from_id:
-        user_id = event.message.to_id
-      else:
-        user_id = event.message.from_id
+      if event.message.out:
+          if not event.message.to_id:
+              raise Exception("No to_id given, but messsage is going out!")
+          chat_info.update(await get_outgoing_info(event.message.to_id))
+      else: #in
+          chat_info.update(await get_incoming_info(event.message.from_id, event.message.to_id))
 
-
-      user_entity = client.get_entity(user_id)
-      user_info = get_user_info(user_entity)
-      if 'name' in user_info:
-        chat_info['to' if event.message.out else 'from'] = user_info['name']
-      if 'phone' in user_info:
-        chat_info['phone'] = user_info['phone']
-
-      group_info = get_chat_info(event.message.to_id)
-      if group_info:
-        chat_info.update(group_info)
-        # if event.message.out: # if sent to group/channel, get name
-        # for key in ['group', 'channel']:
-        #   if key in group_info:
-        #       chat_info['group'] = group_info[key]
-        #       if event.message.out:
-        #           chat_info['to'] = group_info[key]
-        # else: # from someone else
-        #     chat_info['from'] =
-      # if isinstance(group_entity, Chat):
-      #     chat_info['group'] = group_entity.title
-      #     if event.message.out:
-      #         user_name = chat_info['group']
-      # elif isinstance(group_entity, Channel):
-      #     chat_info['channel'] = group_entity.title
-      #     if event.message.out:
-      #         user_name = chat_info['channel']
       if event.message.edit_date:
           chat_info['edit'] = "True"
       msg = ""
 
       if event.message.fwd_from:
           fwd_from = event.message.fwd_from
+          user_info = {}
           if fwd_from.from_id:
-              user_info = get_user_info(from_id)
+              entity = await client.get_entity(fwd_from.from_id)
+              (name, phone) = get_user_info(entity)
+              if name:
+                  user_info['name'] = name
           elif fwd_from.channel_id:
-              user_info = get_chat_info(fwd_from.channel_id)
-          msg += f"Forwarded from {user_info['name']}:\n"
-          # if 'name' in user_info:
-          #   chat_info['from_name'] = user_info['name']
-          # if 'phone' in user_info:
-          #   chat_info['from_phone'] = user_info['phone']
+              entity = await client.get_entity(fwd_from.channel_id)
+              user_info['name'] = entity.title
+          if 'name' in user_info:
+              msg += f"Forwarded from {user_info['name']}:\n"
 
       # if event.message.reply_to_msg_id:
       #     for message in client.iter_messages('username', limit=10):
@@ -171,17 +180,13 @@ def callback(event):
           msg = parseMedia(media, msg)
 
       if event.message.out:
-          for key in ['to', 'group', 'channel']:
-            if key in chat_info:
-              app_log.info("New message to %s!" % chat_info[key])
-              break
+          if 'to' in chat_info:
+            app_log.info("New message to %s!" % chat_info['to'])
           sink_sms.send_dict(IDENTIFIER, msg, chat_info)
           # sink_sms.send_from_me(IDENTIFIER, msg, chat_info['to'])
       else:
-          for key in ['from', 'group', 'channel']:
-            if key in chat_info:
-              app_log.info("New message from %s!" % chat_info[key])
-              break
+          if 'from' in chat_info:
+            app_log.info("New message from %s!" % chat_info['from'])
           sink_sms.send_dict(IDENTIFIER, msg, chat_info)
           # sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
       app_log.debug(msg)
@@ -190,20 +195,26 @@ def callback(event):
         app_log.warning(event.stringify())
         app_log.warning(str(chat_info))
 
-app_log.info("Catching up..")
+async def main():
+    app_log.info("Catching up..")
 
-def handler(signum, frame):
-    if signum == signal.SIGALRM:
-      app_log.info("Got a signal for timeout, raising exception")
-      raise Exception("Function timed out!")
-signal.signal(signal.SIGALRM, handler)
-signal.alarm(10)
-try:
-    client.catch_up()
-except Exception as e:
-    app_log.warning("client.catch_up failed with Exception: %s" % e)
-signal.alarm(0)
+    # def handler(signum, frame):
+    #     if signum == signal.SIGALRM:
+    #       app_log.info("Got a signal for timeout, raising exception")
+    #       raise Exception("Function timed out!")
+    # signal.signal(signal.SIGALRM, handler)
+    # signal.alarm(10)
+    try:
+        await asyncio.wait_for(client.catch_up(), timeout=15)
+    except Exception as e:
+        app_log.warning("client.catch_up failed with Exception: %s" % e)
+        app_log.warning(traceback.format_exc())
+    # signal.alarm(0)
 
-app_log.info("Listening to messages..")
+    app_log.info("Listening to messages..")
 
-client.idle()
+    await client.run_until_disconnected()
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
