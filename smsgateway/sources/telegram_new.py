@@ -7,7 +7,7 @@ from telethon import TelegramClient, events
 from telethon.tl.types import Chat, User, Channel, \
   PeerUser, PeerChat, PeerChannel, \
   MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
-  MessageMediaDocument, MessageMediaWebPage, WebPageEmpty, \
+  MessageMediaDocument, MessageMediaWebPage, \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
 from telethon.tl.functions.users import GetFullUserRequest
 
@@ -80,10 +80,11 @@ def parseMedia(media, msg):
               size = sizeof_fmt(document.size)
               msg += f"Size: {size}\n"
     elif isinstance(media, MessageMediaWebPage):
-        msg += "Media: Webpage\n"
+        msg += "Media: Webpage"
         webpage = media.webpage
-        if not isinstance(webpage, WebPageEmpty):
-          msg += f"> {webpage.site_name}\n> {webpage.title}\n> {webpage.description}\n\n"
+        items = ['site_name', 'title', 'description']
+        if isinstance(webpage, MessageMediaWebPage): #all(item in webpage for item in items):
+          msg += "\n" + '\n'.join("> " + [webpage[item] for item in items])
     else:
         msg += "Media: Unknown"
     return msg
