@@ -149,21 +149,17 @@ def get_incoming_info(from_id, to_id):
     return info
 
 async def get_chat_id(out, from_id, to_id):
-    if out or not from_id:
-        entity = await client.get_entity(to_id) if to_id else None
-    if not out or not to_id:
+    entity = await client.get_entity(to_id) if to_id else None
+    if isinstance(entity, Chat) or isinstance(entity, Channel):
+        return entity.id
+    elif out and entity:
+        return entity.id
+    else:
         entity = await client.get_entity(from_id) if from_id else None
     if entity:
-        #print(entity.stringify())
-        id = entity.id
-        #bot = entity.bot if 'bot' in entity else None
         return entity.id
     else:
         return None
-        # if isinstance(entity, User):
-        #     print(entity.stringify())
-        # if isinstance(entity, Chat):
-        # if isinstance(entity, Channel):
 
 @client.on(events.NewMessage())
 @client.on(events.MessageEdited())
@@ -198,10 +194,10 @@ async def callback(event):
       if event.message.reply_to_msg_id:
         chat_id = await get_chat_id(event.message.out, event.message.from_id, event.message.to_id)
         if chat_id:
+          reply_info = None
           async with aclosing(client.iter_messages(chat_id)) as agen:
             async for m in agen:
                 if m.id == event.message.reply_to_msg_id:
-                    reply_info = None
                     name = None
                     if m.from_id:
                       print(f"from: {m.from_id}")
@@ -221,6 +217,8 @@ async def callback(event):
                     msg += '\n'.join(["> " + line for line in m.message.split('\n')])
                     msg += "\n\n"
                     break
+          if not reply_info:
+              app_log.warning(f"No message found for reply_to_msg_id {event.message.reply_to_msg_id} in chat {chat_id}!")
         else:
           app_log.warning("Reply with unknown chat_id!");
           msg += f"Reply to unknown message"
