@@ -1,104 +1,273 @@
-#!/usr/bin/python
-import subprocess, datetime, os, sys, re, json, textwrap
+import asyncio, sys, os, signal, traceback
+from async_generator import aclosing
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 from smsgateway.config import *
+
+from telethon import TelegramClient, events
+from telethon.tl.types import Chat, User, Channel, \
+  PeerUser, PeerChat, PeerChannel, \
+  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
+  MessageMediaDocument, MessageMediaWebPage, \
+  Document, DocumentAttributeFilename, DocumentAttributeSticker
+from telethon.tl.functions.users import GetFullUserRequest
 
 app_log = setup_logging("telegram")
 
 IDENTIFIER = "TG"
 
-def listen():
-    print("Starting telegram..")
-    proc = subprocess.Popen([TELEGRAM_CLI_PATH, '-RW', '--json', '--disable-colors', '-k', TELEGRAM_KEY_PATH], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=sys.stdout.buffer)
+api_id = 242101
+api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
+session_path = os.path.join(CONFIG_DIR, 'telegram')
 
-    while proc.poll() == None:
-        line = proc.stdout.readline().decode('UTF-8')
-        app_log.debug(line)
-        #proc.stdin.write(bytes('\n', 'UTF-8'))
-        res = parse_message(line)
-        if res:
-          (m, f, to, from_id) = res
-          app_log.info("From: %s\n" % f)
+client = TelegramClient(session_path, api_id, api_hash) #,update_workers=1, spawn_read_thread=False)
+if not client.start():
+    app_log.error("Could not connect! Run python3 -m smsgateway.sources.telegram to authorize!")
+    sys.exit(1)
 
-          if from_id != TG_USER_ID:
-            app_log.info("Forwarding message:\n%s" % m)
-            sink_sms.send(IDENTIFIER, m, f)
-          else:
-            app_log.info("Forwarding message from myself:\n%s" % m)
-            sink_sms.send_from_me(IDENTIFIER, to, m)
+app_log.info("Started TelegramClient")
 
-def parse_message(line):
-  if line != '':
-      line_cleaned = line.strip()
-      m = re.match("^>?[^{]*(\{.*\})$", line_cleaned)
-      if m:
-          line_cleaned = m.group(1)
-          app_log.debug(line_cleaned)
-          j = json.loads(line_cleaned)
-          event = j['event']
-          #print("Event: %s" % event)
-          if event == 'message':
-            try:
-              f = j['from']['print_name']
-              m = ''
-              if 'reply_id' in j and j['reply_id']:
-                app_log.info("Adding reply_to for id %s" % j['reply_id'])
-                command = "get_message %s" % j['reply_id']
-                try:
-                  (success, res) = run_cmd([TELEGRAM_CLI_PATH, "-D", "--json", "-k", TELEGRAM_KEY_PATH, "--profile", "profile_send", "-RW", "-e", command], timeout=30)
-                  if success:
-                    app_log.debug("Successful get_message command")
-                    for l in res.split('\n'):
-                      app_log.debug("Line: %s" % l)
-                      try:
-                        res2 = parse_message(l)
-                        if res2:
-                          (m2, f2, to2, from_id) = res2
-                          app_log.info("Found reply:\n%s" % m)
-                          m = "Reply to %s:\n%s\n\n" % (f2, textwrap.indent(m2, '> '))
-                          break
-                        else:
-                          app_log.warning("Reply_to: parse_message failed")
-                      except Exception as e:
-                        app_log.warning("Reply_to: parse_message failed:\n%s" % e)
-                        pass
-                  else:
-                    app_log.warning("Reply_to: get_message failed:\n%s" % res)
-                except Exception as e:
-                  app_log.warning("Reply_to: get_message failed:\n%s" % e)
 
-              if 'media' in j:
-                media_type = j['media']['type']
-                m += "Media: %s" % media_type.capitalize()
-                #TODO: not working?
-                if media_type == 'geo' and 'latitude' in j['media'] and 'longitude' in j['media']:
-                  m += "\nhttps://osmand.net/go?lat=%s&lon=%s&z=15" %(j['media']['latitude'], j['media']['longitude'])
-                elif media_type == 'contact' and ('phone' in j['media'] or 'first_name' in j['media']):
-                  m += "\n"
-                  m += ' '.join([x for x in j['media'][field] for field in ['first_name', 'last_name', 'phone']])
-                if 'caption' in j['media'] and j['media']['caption']:
-                  m += "\n%s" % j['media']['caption']
-                if 'text' in j:
-                  m += "\n%s" % j['text']
-              elif 'text' in j:
-                m += j['text']
-
-              m = replaceEmoticons(m)
-              peer_type = j['to']['peer_type']
-              if peer_type == 'chat':
-                # Group message
-                to = j['to']['print_name'] if 'print_name' in j['to'] else j['to']['title']
-                f += "@%s" % to
-              elif peer_type == 'user':
-                if 'username' in j['to']:
-                  to_id = j['to']['username']
-                to = j['to']['print_name']
+def parseMedia(media, msg):
+    if msg:
+        msg += "\n"
+    if isinstance(media, MessageMediaGeo):
+        geo = media.geo
+        msg += f"https://osmand.net/go?lat={geo.lat}&lon={geo.long}&z=15"
+    elif isinstance(media, MessageMediaPhoto):
+        photo = media.photo
+        msg += "Media: Photo"
+        if photo.sizes:
+            largest = [s for s in photo.sizes if s.type == 'y']
+            if len(largest) >= 1:
+                largest = largest[0]
+                msg += f" ({largest.w}x{largest.h})"
+    elif isinstance(media, MessageMediaContact):
+        msg += "Media: Contact\n"
+        if media.first_name or media.last_name:
+            msg += f"Name:"
+            if media.first_name:
+                msg += f" {media.first_name}"
+            if media.last_name:
+                msg += f" {media.last_name}"
+            msg += "\n"
+        if media.phone_number:
+            msg += f"Phone: {media.phone_number}"
+    elif isinstance(media, MessageMediaDocument):
+        document = media.document
+        filename = None
+        if document.attributes:
+            filename = [attr.file_name for attr in document.attributes if isinstance(attr, DocumentAttributeFilename)]
+            if len(filename) > 0:
+                filename = filename[0]
+        if isinstance(document, Document) and document.mime_type == "image/webp":
+            msg += "Sticker"
+            alt_smiley = [attr.alt for attr in document.attributes if isinstance(attr, DocumentAttributeSticker)]
+            if len(alt_smiley) > 0:
+                msg += f": {alt_smiley[0]}"
+            msg += "\n"
+        else:
+          msg += "Media: "
+          if document.mime_type.startswith("video"):
+              if filename == "giphy.mp4":
+                msg += "GIF\n"
               else:
-                app_log.warning("Unknown peer_type: %s" % peer_type)
-              from_id = j['from']['peer_id']
-              return (m, f, to, from_id)
-            except KeyError:
-              app_log.error("KeyError in message \"%s\"" % line_cleaned)
+                msg += "Video\n"
+          else:
+              msg += "Media: File\n"
+          if filename:
+            msg += f"Filename: {filename}\n"
+          if document.size:
+              size = sizeof_fmt(document.size)
+              msg += f"Size: {size}\n"
+    elif isinstance(media, MessageMediaWebPage):
+        msg += "Media: Webpage"
+        webpage = media.webpage
+        items = ['site_name', 'title', 'description']
+        if isinstance(webpage, MessageMediaWebPage): #all(item in webpage for item in items):
+          msg += "\n" + '\n'.join("> " + [webpage[item] for item in items])
+    else:
+        msg += "Media: Unknown"
+    return msg
 
-listen()
+def get_user_info(entity):
+  user_name = None
+  user_phone = None
+  if entity.phone:
+      user_phone = entity.phone
+  user_name = ' '.join([x for x in [entity.first_name, entity.last_name] if x])
+  return (user_name, user_phone)
+
+@asyncio.coroutine
+def get_outgoing_info(id):
+    info = {}
+    entity = yield from client.get_entity(id)
+    if isinstance(entity, User):
+      (name, phone) = get_user_info(entity)
+      if name:
+          info['to'] = name
+      if phone:
+          info['phone'] = phone
+      info['type'] = 'User'
+    elif isinstance(entity, Chat):
+        info['to'] = entity.title
+        info['type'] = 'Group'
+    elif isinstance(entity, Channel):
+        info['to'] = entity.title
+        info['type'] = 'Channel'
+    else:
+        app_log.warning(f"Unknown entity type for id {to_id}!")
+    return info
+
+@asyncio.coroutine
+def get_incoming_info(from_id, to_id):
+    from_entity = yield from client.get_entity(from_id) if from_id else None
+    to_entity = yield from client.get_entity(to_id) if to_id else None
+    info = {}
+    if from_entity:
+      if isinstance(from_entity, User):
+        (name, phone) = get_user_info(from_entity)
+        if name:
+            info['from'] = name
+        if phone:
+            info['phone'] = phone
+        info['type'] = 'User'
+      elif isinstance(from_entity, Channel):
+        info['from'] = from_entity.title
+        info['type'] = 'Channel'
+      else:
+          app_log.warning(f"Unknown entity type for id {from_id}!")
+    if to_entity:
+      if isinstance(to_entity, Chat):
+          info['to'] = to_entity.title
+          info['type'] = 'Group'
+      elif isinstance(to_entity, Channel):
+        info['to'] = to_entity.title
+        info['type'] = 'Channel'
+      else:
+          app_log.warning(f"Unknown entity type for id {to_id}!")
+    return info
+
+async def get_chat_id(out, from_id, to_id):
+    if out or not from_id:
+        entity = await client.get_entity(to_id) if to_id else None
+    if not out or not to_id:
+        entity = await client.get_entity(from_id) if from_id else None
+    if entity:
+        #print(entity.stringify())
+        id = entity.id
+        #bot = entity.bot if 'bot' in entity else None
+        return entity.id
+    else:
+        return None
+        # if isinstance(entity, User):
+        #     print(entity.stringify())
+        # if isinstance(entity, Chat):
+        # if isinstance(entity, Channel):
+
+@client.on(events.NewMessage())
+@client.on(events.MessageEdited())
+async def callback(event):
+    chat_info = {'ID': event.message.id}
+    try:
+      if event.message.out:
+          if not event.message.to_id:
+              raise Exception("No to_id given, but messsage is going out!")
+          chat_info.update(await get_outgoing_info(event.message.to_id))
+      else: #in
+          chat_info.update(await get_incoming_info(event.message.from_id, event.message.to_id))
+
+      if event.message.edit_date:
+          chat_info['edit'] = "True"
+      msg = ""
+
+      if event.message.fwd_from:
+          fwd_from = event.message.fwd_from
+          user_info = {}
+          if fwd_from.from_id:
+              entity = await client.get_entity(fwd_from.from_id)
+              (name, phone) = get_user_info(entity)
+              if name:
+                  user_info['name'] = name
+          elif fwd_from.channel_id:
+              entity = await client.get_entity(fwd_from.channel_id)
+              user_info['name'] = entity.title
+          if 'name' in user_info:
+              msg += f"Forwarded from {user_info['name']}:\n"
+
+      if event.message.reply_to_msg_id:
+        chat_id = await get_chat_id(event.message.out, event.message.from_id, event.message.to_id)
+        if chat_id:
+          async with aclosing(client.iter_messages(chat_id)) as agen:
+            async for m in agen:
+                if m.id == event.message.reply_to_msg_id:
+                    reply_info = None
+                    name = None
+                    if m.from_id:
+                      print(f"from: {m.from_id}")
+                    if m.to_id:
+                      print(f"to: {m.to_id}")
+                    if m.out:
+                        reply_info = await get_incoming_info(m.from_id, m.to_id)
+                        if 'from' in reply_info:
+                          name = reply_info['from']
+                    if not m.out or not name:
+                        reply_info = await get_outgoing_info(m.from_id)
+                        if 'to' in reply_info:
+                          name = reply_info['to']
+                    if not name:
+                        name = "N/A"
+                    msg += f"Reply to {name}:\n"
+                    msg += '\n'.join(["> " + line for line in m.message.split('\n')])
+                    msg += "\n\n"
+                    break
+        else:
+          app_log.warning("Reply with unknown chat_id!");
+          msg += f"Reply to unknown message"
+
+         #for message in client.iter_messages('username', limit=10):
+      msg += event.message.message
+
+      media = event.message.media
+      if media:
+          msg = parseMedia(media, msg)
+
+      if event.message.out:
+          if 'to' in chat_info:
+            app_log.info("New message to %s!" % chat_info['to'])
+          sink_sms.send_dict(IDENTIFIER, msg, chat_info)
+          # sink_sms.send_from_me(IDENTIFIER, msg, chat_info['to'])
+      else:
+          if 'from' in chat_info:
+            app_log.info("New message from %s!" % chat_info['from'])
+          sink_sms.send_dict(IDENTIFIER, msg, chat_info)
+          # sink_sms.send(IDENTIFIER, msg, user_name, user_number, group_name)
+      app_log.debug(msg)
+    except Exception as e:
+        app_log.warning(traceback.format_exc())
+        app_log.warning(event.stringify())
+        app_log.warning(str(chat_info))
+
+async def main():
+    app_log.info("Catching up..")
+
+    # def handler(signum, frame):
+    #     if signum == signal.SIGALRM:
+    #       app_log.info("Got a signal for timeout, raising exception")
+    #       raise Exception("Function timed out!")
+    # signal.signal(signal.SIGALRM, handler)
+    # signal.alarm(10)
+    try:
+        await asyncio.wait_for(client.catch_up(), timeout=15)
+    except Exception as e:
+        app_log.warning("client.catch_up failed with Exception: %s" % e)
+        app_log.warning(traceback.format_exc())
+    # signal.alarm(0)
+
+    app_log.info("Listening to messages..")
+
+    await client.run_until_disconnected()
+
+if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
