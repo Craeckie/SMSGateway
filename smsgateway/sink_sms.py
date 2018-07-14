@@ -1,11 +1,9 @@
 import datetime, os
 from smsgateway.config import *
+from smsgateway.sources.utils import *
 
 def send_dict(type, text, headers):
-    msg = f"{type}\n"
-    msg += '\n'.join([f"{k[0].upper() + k[1:]}: {v}" for k,v in headers.items() if len(k) > 1])
-    msg += f"\n\n{text}"
-    send_to(CONTROL_PHONES[0], msg)
+    send_to(CONTROL_PHONES[0], format_sms(type, text, headers))
 def send(type, text, _from, phone=None, group=None):
     lines = [
         type,

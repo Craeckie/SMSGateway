@@ -219,6 +219,7 @@ async def callback(event):
                     break
           if not reply_info:
               app_log.warning(f"No message found for reply_to_msg_id {event.message.reply_to_msg_id} in chat {chat_id}!")
+              msg += f"Reply to unknown message"
         else:
           app_log.warning("Reply with unknown chat_id!");
           msg += f"Reply to unknown message"

@@ -46,6 +46,13 @@ def run_cmd(args, name=None, maxlines=7, timeout=300):
 def _repl(regex, sub, text):
   return re.sub(regex, sub, text, flags=re.UNICODE)
 
+def format_sms(type, text, headers):
+    msg = f"{type}\n"
+    msg += '\n'.join([f"{k[0].upper() + k[1:]}: {v}" for k,v in headers.items() if len(k) > 1])
+    if text:
+        msg += f"\n\n{text}"
+    return msg
+
 try:
   import emoji
   use_emoji = True

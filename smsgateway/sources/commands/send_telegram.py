@@ -1,9 +1,19 @@
 import asyncio, re, json
+from async_generator import aclosing
+
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway.sources.utils import *
 from smsgateway import sink_sms
+
 from telethon import TelegramClient, utils
+
+from telethon.tl.types import Chat, User, Channel, \
+  PeerUser, PeerChat, PeerChannel, \
+  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
+  MessageMediaDocument, MessageMediaWebPage, \
+  Document, DocumentAttributeFilename, DocumentAttributeSticker
+
 
 app_log = setup_logging("telegram-send")
 
@@ -42,12 +52,13 @@ async def send_message(message, to_matched):
         return ret
 
     to = None
-    for x in await client.iter_dialogs():
-        name = get_display_name(x.entity)
-        if name and name == to_matched:
-          to = x.entity.id
-          print("Found it via display_name: %s" % x.entity.stringify())
-          break
+    async with aclosing(client.iter_dialogs()) as agen:
+      async for x in agen:
+          name = get_display_name(x.entity)
+          if name and name == to_matched:
+            to = x.entity.id
+            print("Found it via display_name: %s" % x.entity.stringify())
+            break
     if not to:
         print(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
@@ -62,13 +73,17 @@ async def send_message(message, to_matched):
 
     await client.send_message(to, message)
     await client.disconnect()
-    ret = '\n'.join([
-      IDENTIFIER,
-      f"To: {name}",
-      "",
-      message
-    ])
-    return ret
+    msg = format_sms(IDENTIFIER, message, {
+      'to': name,
+      'status': 'Processed'
+    })
+    # ret = '\n'.join([
+    #   IDENTIFIER,
+    #   f"To: {name}",
+    #   "",
+    #   message
+    # ])
+    return msg
 
 def run(lines):
     print("Forwarding Telegram Message")
@@ -83,7 +98,7 @@ def run(lines):
             messageStarted = True
             message += line
         else:
-            mTo = re.match("To: (.*)$", line)
+            mTo = re.match("^To: (.*)$", line)
             if mTo:
                 to_matched = mTo.group(1).strip()
             else:
@@ -102,7 +117,7 @@ def run(lines):
 if __name__ == '__main__':
     client = TelegramClient(session_path, api_id, api_hash)
     if not client.start():
-        app_log.error("Could not connect! Run python3 -m smsgateway.source.telegram to authorize!")
+        app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.source.telegram!")
         sys.exit(1)
 
 command_list.append({
