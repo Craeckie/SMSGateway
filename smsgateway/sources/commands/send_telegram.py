@@ -34,15 +34,16 @@ def check(cmd, multiline):
       return False
 
 def get_display_name(entity):
+    app_log.debug("Looking up entity " + entity.stringify())
     if isinstance(entity, User):
         return ' '.join([x for x in [entity.first_name, entity.last_name] if x])
-    elif 'title' in entity:
+    elif isinstance(entity, Chat) or isinstance(entity, Channel):
         return entity.title
     else:
         return None
 
 async def send_message(message, to_matched):
-    print("Starting client..")
+    app_log.info("Starting client..")
     client = TelegramClient(session_path, api_id, api_hash)
     try:
         await client.start()
@@ -57,17 +58,17 @@ async def send_message(message, to_matched):
           name = get_display_name(x.entity)
           if name and name == to_matched:
             to = x.entity.id
-            print("Found it via display_name: %s" % x.entity.stringify())
+            app_log.info("Found it via display_name: %s" % x.entity.stringify())
             break
     if not to:
-        print(f"Couldn't find {to}! Trying directly..")
+        app_lo.warning(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
 
-    print("Sending Telegram msg:\n%s" % message)
+    app_log.info("Sending Telegram msg:\n%s" % message)
 
     try:
         import getpass
-        print("I am: %s" % getpass.getuser())
+        app_log.info("I am: %s" % getpass.getuser())
     except:
         pass
 
@@ -77,6 +78,7 @@ async def send_message(message, to_matched):
       'to': name,
       'status': 'Processed'
     })
+    app_log.info(msg)
     # ret = '\n'.join([
     #   IDENTIFIER,
     #   f"To: {name}",
@@ -86,7 +88,7 @@ async def send_message(message, to_matched):
     return msg
 
 def run(lines):
-    print("Forwarding Telegram Message")
+    app_log.info("Forwarding Telegram Message")
     messageStarted = False
     to_matched = None
     message = ""
