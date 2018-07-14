@@ -36,15 +36,9 @@ Make sure that the file is correct, otherwise you might **lock yourself out**! I
 `visudo -f /etc/sudoers.d/010_smsd-nopasswd`, enter the contents in the editor and save it.
 
 ### Telegram
-Uses [Telegram-Cli](https://github.com/vysheng/tg) using [this](https://github.com/a-x-/tgl/tree/patch-1) patch to fix authorization
-```bash
-apt install libevent-dev libssl-dev libreadline-dev libconfig-dev liblua50-dev libjansson-dev
-git clone --depth 1 https://github.com/vysheng/tg.git
-cd tg
-git clone --recursive https://github.com/a-x-/tgl.git
-git checkout --depth 1 patch-1
-./configure && make
-```
+Uses [Telethon](https://github.com/LonamiWebs/Telethon).
+
+Run `python3 -m smsgateway.sources.telegram` to authorize for receiving messages, similarly run `python3 -m smsgateway.sources.commands.send_telegram` to authorize for sending messages.
 ### Facebook
 Uses [fbchat](https://github.com/carpedm20/fbchat), see [documentation](https://fbchat.readthedocs.io/)
 ```bash

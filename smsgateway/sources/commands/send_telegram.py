@@ -117,7 +117,7 @@ def run(lines):
 if __name__ == '__main__':
     client = TelegramClient(session_path, api_id, api_hash)
     if not client.start():
-        app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.source.telegram!")
+        app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.sources.commands.send_telegram!")
         sys.exit(1)
 
 command_list.append({
