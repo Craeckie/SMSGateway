@@ -98,10 +98,20 @@ def get_user_info(entity):
   user_name = ' '.join([x for x in [entity.first_name, entity.last_name] if x])
   return (user_name, user_phone)
 
-@asyncio.coroutine
-def get_outgoing_info(id):
+async def get_entity(input_id):
+    try:
+      input_entity = await client.get_input_entity(input_id) if input_id else None
+    except:
+      pass
+    entity = await client.get_entity(input_entity) if input_entity else None
+    if not entity:
+        entity = await client.get_entity(input_id) if input_id else None
+    return entity
+
+#@asyncio.coroutine
+async def get_outgoing_info(id):
     info = {}
-    entity = yield from client.get_entity(id)
+    entity = await get_entity(id)
     if isinstance(entity, User):
       (name, phone) = get_user_info(entity)
       if name:
@@ -116,13 +126,13 @@ def get_outgoing_info(id):
         info['to'] = entity.title
         info['type'] = 'Channel'
     else:
-        app_log.warning(f"Unknown entity type for id {to_id}!")
+        app_log.warning(f"Unknown entity type for id {id}:\nEntity: {entity.stringify()}")
     return info
 
-@asyncio.coroutine
-def get_incoming_info(from_id, to_id):
-    from_entity = yield from client.get_entity(from_id) if from_id else None
-    to_entity = yield from client.get_entity(to_id) if to_id else None
+# @asyncio.coroutine
+async def get_incoming_info(from_id, to_id):
+    from_entity = await get_entity(from_id)
+    to_entity = await get_entity(to_id)
     info = {}
     if from_entity:
       if isinstance(from_entity, User):
