@@ -50,7 +50,7 @@ async def send_message(message, to_matched):
     except Exception as e:
         ret = "Could not connect! Run python3 -m smsgateway.sources.commands.send_telegram to authorize!\nError: %s" % e
         app_log.error(ret)
-        return ret
+        return (False, ret)
 
     to = None
     async with aclosing(client.iter_dialogs()) as agen:
@@ -85,7 +85,7 @@ async def send_message(message, to_matched):
     #   "",
     #   message
     # ])
-    return msg
+    return (True, msg)
 
 def run(lines):
     app_log.info("Forwarding Telegram Message")
@@ -108,7 +108,9 @@ def run(lines):
 
     if to_matched and message:
       loop = asyncio.get_event_loop()
-      ret = loop.run_until_complete(send_message(message, to_matched))
+      (success, ret) = loop.run_until_complete(send_message(message, to_matched))
+      if success:
+          ret = None
       loop.close()
     else:
       ret = f"Couldn't match To: {to_matched} or message {message}"
