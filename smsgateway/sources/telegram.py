@@ -40,6 +40,8 @@ async def callback(event):
 
       if event.message.edit_date:
           chat_info['edit'] = "True"
+      if event.message.date:
+          chat_info['date'] = event.message.date.strftime('%s')
       msg = ""
 
       if event.message.fwd_from:
