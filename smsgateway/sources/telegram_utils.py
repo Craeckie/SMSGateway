@@ -1,16 +1,23 @@
 import asyncio, json
+from datetime import datetime, timedelta
 from async_generator import aclosing
 from telethon.tl.types import Chat, User, Channel, \
   PeerUser, PeerChat, PeerChannel, \
-  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
+  MessageMediaGeo, MessageMediaGeoLive, MessageMediaContact, MessageMediaPhoto, \
   MessageMediaDocument, MessageMediaWebPage, \
-  Document, DocumentAttributeFilename, DocumentAttributeSticker
+  Document, DocumentAttributeFilename, DocumentAttributeSticker, DocumentAttributeAudio
+
+from smsgateway.sources.utils import *
 
 def parseMedia(media):
     msg = ""
 
-    if isinstance(media, MessageMediaGeo):
+    if isinstance(media, MessageMediaGeo) or isinstance(media, MessageMediaGeoLive):
         geo = media.geo
+        if isinstance(media, MessageMediaGeo):
+          msg += "Media: geo\n"
+        elif isinstance(media, MessageMediaGeoLive):
+          msg += "Media: geo live\n"
         msg += f"https://osmand.net/go?lat={geo.lat}&lon={geo.long}&z=15"
     elif isinstance(media, MessageMediaPhoto):
         photo = media.photo
@@ -34,10 +41,15 @@ def parseMedia(media):
     elif isinstance(media, MessageMediaDocument):
         document = media.document
         filename = None
+        duration = None
         if document.attributes:
-            filename = [attr.file_name for attr in document.attributes if isinstance(attr, DocumentAttributeFilename)]
-            if len(filename) > 0:
-                filename = filename[0]
+            for attr in document.attributes:
+                if isinstance(attr, DocumentAttributeFilename):
+                  filename = attr.file_name
+                  if len(filename) > 0:
+                     filename = filename[0]
+                elif isinstance(attr, DocumentAttributeAudio):
+                  duration = attr.duration
         if isinstance(document, Document) and document.mime_type == "image/webp":
             msg += "Sticker"
             alt_smiley = [attr.alt for attr in document.attributes if isinstance(attr, DocumentAttributeSticker)]
@@ -51,10 +63,15 @@ def parseMedia(media):
                 msg += "GIF\n"
               else:
                 msg += "Video\n"
+          elif document.mime_type.startswith("audio"):
+              msg += "Audio\n"
           else:
-              msg += "Media: File\n"
+              msg += "File\n"
           if filename:
             msg += f"Filename: {filename}\n"
+          if duration:
+            duration = timedelta(seconds=duration).strftime("%M:%S")
+            msg += f"Duration: {duration}\n"
           if document.size:
               size = sizeof_fmt(document.size)
               msg += f"Size: {size}\n"
