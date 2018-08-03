@@ -78,10 +78,18 @@ def _stat_temp():
     except Exception as e:
         return "\nCouldn't read temperature: %s" % e
 
+def _stat_sms():
+    try:
+        path, dirs, files = next(os.walk("/var/spool/sms/checked"))
+        return str(len(files))
+    except Exception as e:
+        return e
+
 def status(full=False):
     ret = 'Status of SMSGateway:\n'
     ret += 'Uptime: %s, Temp: %s\n' % (_stat_uptime(), _stat_temp())
     ret += 'Free space: %s\n' % _stat_df()
+    ret += 'SMS queue: %s' % _stat_sms()
     net_inf = NETWORK_INTERFACES_ALL if full else NETWORK_INTERFACES
     wifi_inf = WIFI_INTERFACES_ALL if full else WIFI_INTERFACES
 

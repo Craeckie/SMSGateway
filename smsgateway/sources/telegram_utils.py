@@ -46,8 +46,8 @@ def parseMedia(media):
             for attr in document.attributes:
                 if isinstance(attr, DocumentAttributeFilename):
                   filename = attr.file_name
-                  if len(filename) > 0:
-                     filename = filename[0]
+                  # if len(filename) > 0:
+                  #    filename = filename[0]
                 elif isinstance(attr, DocumentAttributeAudio):
                   duration = attr.duration
         if isinstance(document, Document) and document.mime_type == "image/webp":
@@ -70,7 +70,7 @@ def parseMedia(media):
           if filename:
             msg += f"Filename: {filename}\n"
           if duration:
-            duration = timedelta(seconds=duration).strftime("%M:%S")
+            duration = str(timedelta(seconds=duration))
             msg += f"Duration: {duration}\n"
           if document.size:
               size = sizeof_fmt(document.size)
