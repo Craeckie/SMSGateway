@@ -61,7 +61,7 @@ async def send_message(message, to_matched):
             app_log.info("Found it via display_name: %s" % x.entity.stringify())
             break
     if not to:
-        app_lo.warning(f"Couldn't find {to}! Trying directly..")
+        app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
 
     app_log.info("Sending Telegram msg:\n%s" % message)
