@@ -97,6 +97,16 @@ async def callback(event):
         app_log.warning(event.stringify())
         app_log.warning(str(chat_info))
 
+@client.on(events.MessageDeleted())
+async def callback_delete(event):
+    ids = event.deleted_ids
+    app_log.info("Deleted messages with IDs %s!" % str(ids))
+    for id in ids:
+        sink_sms.send_dict(IDENTIFIER, None, {
+          'ID': id,
+          'Status': 'deleted'
+        })
+
 async def main():
     app_log.info("Catching up..")
 

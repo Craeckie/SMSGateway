@@ -13,10 +13,11 @@ def send(type, text, _from, phone=None, group=None):
         lines += [f"Group: {group}"]
     if phone:
         lines += [f"Phone: {phone}"]
-    lines += [
-        "",
-        text
-    ]
+    if text:
+        lines += [
+            "",
+            text
+        ]
     send_to(CONTROL_PHONES[0], '\n'.join(lines))
 
 def send_from_me(type, text, to):
