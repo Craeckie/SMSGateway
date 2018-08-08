@@ -86,6 +86,7 @@ def parseMedia(media):
     return msg
 
 def parseButtons(reply_markup):
+    # if isinstance(reply_markup, ReplyKeyboard..)
     rows = reply_markup.rows
     data_rows = []
     for row in rows:
