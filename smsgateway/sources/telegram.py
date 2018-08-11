@@ -63,12 +63,19 @@ async def callback(event):
             msg += await parseReplyTo(client, app_log, event)
           except Exception as e:
             msg += f"Reply parsing failed: {e}\n\n"
+            app_log.warning(e)
+            app_log.warning(traceback.format_exc())
+            app_log.warning(event.stringify())
 
       if event.message.reply_markup:
           try:
             chat_info.update(parseButtons(event.message.reply_markup))
           except Exception as e:
             msg += f"Button parsing failed: {e}\n\n"
+            app_log.warning(e)
+            app_log.warning(traceback.format_exc())
+            app_log.warning(event.stringify())
+
 
       msg += event.message.message
 
