@@ -5,7 +5,8 @@ from telethon.tl.types import Chat, User, Channel, \
   PeerUser, PeerChat, PeerChannel, \
   MessageMediaGeo, MessageMediaGeoLive, MessageMediaContact, MessageMediaPhoto, \
   MessageMediaDocument, MessageMediaWebPage, \
-  Document, DocumentAttributeFilename, DocumentAttributeSticker, DocumentAttributeAudio
+  Document, DocumentAttributeFilename, DocumentAttributeSticker, DocumentAttributeAudio, \
+  ReplyKeyboardHide
 
 from smsgateway.sources.utils import *
 
@@ -87,6 +88,8 @@ def parseMedia(media):
 
 def parseButtons(reply_markup):
     # if isinstance(reply_markup, ReplyKeyboard..)
+    if isinstance(reply_markup, ReplyKeyboardHide):
+      return {}
     rows = reply_markup.rows
     data_rows = []
     for row in rows:
