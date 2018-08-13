@@ -44,7 +44,11 @@ def run(lines):
         id = None
         name = None
         thread_type = None
-        thread_list = client.fetchThreadInfo(to_matched)
+        thread_list = None
+        try:
+            thread_list = client.fetchThreadInfo(to_matched)
+        except:
+            pass
         if thread_list and len(thread_list) > 0 and to_matched in thread_list:
             match = thread_list[to_matched]
             id = match.uid
@@ -64,9 +68,9 @@ def run(lines):
                 thread_type = ThreadType.GROUP
 
         if id != None:
-            ret = f"{id}, {thread_type}:\n{message}"
-            print(ret)
-            #client.send(Message(text=message), thread_id=id, thread_type=thread_type)
+            ret = f"Message to {id} ({thread_type}), called {name}:\n{message}"
+            app_log.info(ret)
+            client.send(Message(text=message), thread_id=id, thread_type=thread_type)
         else:
             ret = f"User/Group {to_matched} couldn't be found!"
             app_log.error(ret)

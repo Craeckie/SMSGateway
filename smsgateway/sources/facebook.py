@@ -20,20 +20,22 @@ class EchoBot(Client):
         source_name = author_id
         chat_info = {'ID' : mid}
 
+        # If you're not the author, echo
         if author_id == self.uid:
             author_id = thread_id
             source_name = author_id
             isSent = True
-            chat_info['To'] = source_name
         else:
             isSent = False
-            chat_info['From'] = source_name
 
-        # If you're not the author, echo
         for u in users:
             if str(u.uid) == str(author_id):
                 source_name = u.name
                 break
+        if isSent:
+            chat_info['To'] = source_name
+        else:
+            chat_info['From'] = source_name
 
         if thread_type == ThreadType.USER:
             chat_info['Type'] = 'User'
