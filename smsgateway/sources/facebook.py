@@ -1,23 +1,33 @@
 import os
-from fbchat import log, Client
+from fbchat import Client
+from fbchat.models import *
 from smsgateway import sink_sms
 from smsgateway.config import *
+from smsgateway.sources.utils import *
+from smsgateway.sources.facebook_utils import *
 
 IDENTIFIER = "FB"
 
+app_log = setup_logging("facebook")
+
 # Subclass fbchat.Client and override required methods
 class EchoBot(Client):
-    def onMessage(self, author_id, message, thread_id, thread_type, **kwargs):
+    def onMessage(self, mid, author_id, message, thread_id, thread_type, ts, metadata, msg, **kwargs):
         self.markAsDelivered(author_id, thread_id)
 #        self.markAsRead(author_id)
 
-        log.info("Message from {} in {} ({}): {}".format(author_id, thread_id, thread_type.name, message))
+        app_log.info("Message from {} in {} ({}): {}".format(author_id, thread_id, thread_type.name, message))
         source_name = author_id
-        isSent = False
+        chat_info = {'ID' : mid}
+
         if author_id == self.uid:
             author_id = thread_id
             source_name = author_id
             isSent = True
+            chat_info['To'] = source_name
+        else:
+            isSent = False
+            chat_info['From'] = source_name
 
         # If you're not the author, echo
         for u in users:
@@ -25,24 +35,30 @@ class EchoBot(Client):
                 source_name = u.name
                 break
 
-        if isSent:
-            print("To: %s\n\n%s\n" % (source_name, message))
-            sink_sms.send_from_me(IDENTIFIER, message, source_name)
-        else:
-            print("From: %s\n\n%s\n" % (source_name, message))
-            sink_sms.send(IDENTIFIER, message, source_name)
+        if thread_type == ThreadType.USER:
+            chat_info['Type'] = 'User'
+        elif thread_type == ThreadType.GROUP:
+            chat_info['Type'] = 'Group'
+        elif thread_type == ThreadType.ROOM:
+            chat_info['Type'] = 'Channel'
+
+        sink_sms.send_dict(IDENTIFIER, message, chat_info)
+        app_log.info("Message sent by {name} to a {type} with ID {id}:\n{msg}".format(
+            name='me' if isSent else source_name,
+            type=chat_info['Type'],
+            id=mid,
+            msg=message
+        ))
+
+        # if isSent:
+        #     print("To: %s\n\n%s\n" % (source_name, message))
+        #     sink_sms.send_from_me(IDENTIFIER, message, source_name)
+        # else:
+        #     print("From: %s\n\n%s\n" % (source_name, message))
+        #     sink_sms.send(IDENTIFIER, message, source_name)
 #            self.sendMessage(message, thread_id=thread_id, thread_type=thread_type)
 
-session_cookies = None
-if os.path.exists(FB_COOKIE_PATH):
-    with open(FB_COOKIE_PATH, 'r') as f:
-         session_cookies = f.read()
-
-client = EchoBot(FB_CREDENTIALS[0], FB_CREDENTIALS[1], session_cookies=session_cookies)
-session_cookies = client.getSession()
-with open(FB_COOKIE_PATH, 'w') as f:
-    f.write(str(session_cookies))
-    #f.write(json.dumps(session_cookies))
+client = login(FB_CREDENTIALS, FB_COOKIE_PATH, EchoBot)
 
 users = client.fetchAllUsers()
 

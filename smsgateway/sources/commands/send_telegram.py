@@ -98,7 +98,6 @@ def run(lines):
             message += f"\n{line}"
         elif not line.strip(): # empty line
             messageStarted = True
-            message += line
         else:
             mTo = re.match("^To: (.*)$", line)
             if mTo:
