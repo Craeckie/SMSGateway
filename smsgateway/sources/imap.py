@@ -4,6 +4,7 @@ from smsgateway.config import *
 
 from imapclient import IMAPClient
 import email
+from email.header import decode_header, make_header
 from bs4 import BeautifulSoup
 
 app_log = setup_logging("email")
@@ -30,14 +31,11 @@ def parse_fetch(fetch):
             chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
             text = '\n'.join(chunk for chunk in chunks if chunk)
             body = text
+    items = {'Body': body}
+    for name in ['Subject', 'From', 'To']:
+        items[name] = make_header(decode_header(msg[name]))
 
-
-    return {
-      'Subject': msg['Subject'],
-      'From': msg['From'],
-      'To': msg['To'],
-      'Body': body
-    }
+    return items
 def fetch_messages(server, num):
     app_log.info("Fetching %s messages" % num)
     msg_list = server.sort(sort_criteria='REVERSE DATE', charset='UTF-8')
@@ -65,7 +63,7 @@ def wait_idle(server):
     while True:
       app_log.debug("Checking IDLE")
       responses = server.idle_check(timeout=30)
-      app_log.debug("Server sent: ", responses if responses else "nothing")
+      app_log.debug("Server sent: %s" % responses if responses else "nothing")
       if responses:
           num = 0
           for (n, type) in responses:
@@ -79,6 +77,7 @@ def wait_idle(server):
             for msg in messages:
                 body = msg['Body']
                 del msg['Body']
+                app_log.debug("Forwarding message: %s" % str(msg))
                 sink_sms.send_dict(IDENTIFIER, body, msg)
             server.idle()
 
