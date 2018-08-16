@@ -1,0 +1,17 @@
+[Unit]
+Description=Uses IMAP IDLE to forward E-Mail Messages
+After=network-online.target
+OnFailure=unit-failed@%n
+
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m smsgateway.sources.imap
+User=smsd
+Restart=always
+RestartSec=30
+StartLimitInterval=600
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
