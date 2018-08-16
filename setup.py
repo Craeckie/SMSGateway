@@ -15,6 +15,7 @@ setuptools.setup(
         "appdirs",
         "telethon",
         "fbchat",
-        "arrow"
+        "arrow",
+        'imapclient'
     ]
 )
