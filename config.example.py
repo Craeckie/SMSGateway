@@ -23,6 +23,18 @@ SIGNAL_CLI_PATH = '/usr/local/bin/signal-cli'
 FB_COOKIE_PATH = '/home/smsd/facebook-session.txt'
 FB_CREDENTIALS = ('me@example.com', 'mysecretpassword')
 
+# E-Mail
+EMAIL_ACCOUNTS = [
+    {
+      'Host': 'imap.example.com',
+      'USERNAME': 'somebody@example.com',
+      'PASSWORD': 'mysecretpassword'
+    }
+]
+EMAIL_HOST = 'imap.example.com'
+EMAIL_USERNAME = 'somebody@example.com'
+EMAIL_PASSWORD = 'mysecretpassword'
+
 # WhatsApp
 WA_NUMBER = '4912312312312'
 WA_USER_ALIASES = {
