@@ -24,16 +24,13 @@ FB_COOKIE_PATH = '/home/smsd/facebook-session.txt'
 FB_CREDENTIALS = ('me@example.com', 'mysecretpassword')
 
 # E-Mail
-EMAIL_ACCOUNTS = [
-    {
+EMAIL_ACCOUNTS = {
+    'example_name': {
       'Host': 'imap.example.com',
-      'USERNAME': 'somebody@example.com',
-      'PASSWORD': 'mysecretpassword'
+      'User': 'somebody@example.com',
+      'Password': 'mysecretpassword'
     }
-]
-EMAIL_HOST = 'imap.example.com'
-EMAIL_USERNAME = 'somebody@example.com'
-EMAIL_PASSWORD = 'mysecretpassword'
+}
 
 # WhatsApp
 WA_NUMBER = '4912312312312'

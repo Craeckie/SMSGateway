@@ -1,15 +1,15 @@
+import email, time, argparse
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 from smsgateway.config import *
 
 from imapclient import IMAPClient
-import email, time
 from email.header import decode_header, make_header
 from bs4 import BeautifulSoup
 
-app_log = setup_logging("email")
-
 IDENTIFIER = "EM"
+
+app_log = None
 
 def parse_part(part):
     payload = None
@@ -71,11 +71,13 @@ def fetch_messages(server, num):
             app_log.warning("No RFC822 in this fetch: %s" % fetch)
     return messages
 
-def login():
-    server = IMAPClient(EMAIL_HOST)
-    server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+def login(name):
+    account = EMAIL_ACCOUNTS[name]
+    server = IMAPClient(account['Host'])
+    server.login(account['User'], account['Password'])
     inbox = server.select_folder('INBOX')
     app_log.debug("Inbox: %s" % inbox)
+    return server
 
 def wait_idle(server):
     app_log.info("Waiting for IDLE response..")
@@ -123,8 +125,16 @@ def wait_idle(server):
     server.idle_done()
 
 def main():
+    global app_log
+    parser = argparse.ArgumentParser()
+    parser.add_argument("account", help="The account name from config.py")
+    args = parser.parse_args()
+
+    app_log = setup_logging("email-%s" % args.account)
+
+
     app_log.info("Logging in..")
-    server = login()
+    server = login(args.account)
 
     wait_idle(server)
 
