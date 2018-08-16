@@ -5,7 +5,7 @@ OnFailure=unit-failed@%n
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m smsgateway.sources.signal
+ExecStart=/usr/bin/python3 -m smsgateway.sources.signal_messenger
 User=smsd
 Restart=always
 RestartSec=20
