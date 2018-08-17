@@ -79,7 +79,7 @@ def login(name):
     app_log.debug("Inbox: %s" % inbox)
     return server
 
-def wait_idle(server):
+def wait_idle(server, account):
     app_log.info("Waiting for IDLE response..")
     server.idle()
     last_exists = 0
@@ -114,12 +114,12 @@ def wait_idle(server):
         elif diff < 5:
             app_log.warning(f"IDLE check took only {diff} seconds!\nNeed to reconnect..")
             server = login()
-        
-        if time.time() - loop_start > 60*10:
+
+        if time.time() - loop_start > 60*20:
             app_log.info("IDLE timeout elapsed, re-establishing connection..")
             server.idle_done()
             server.logout()
-            server = login()
+            server = login(account)
             loop_start = time.time()
 
     server.idle_done()
@@ -130,13 +130,15 @@ def main():
     parser.add_argument("account", help="The account name from config.py")
     args = parser.parse_args()
 
-    app_log = setup_logging("email-%s" % args.account)
+    account = args.account
+
+    app_log = setup_logging("email-%s" % account)
 
 
     app_log.info("Logging in..")
-    server = login(args.account)
+    server = login(account)
 
-    wait_idle(server)
+    wait_idle(server, account)
 
     server.logout()
 

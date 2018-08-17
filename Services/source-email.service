@@ -6,7 +6,7 @@ OnFailure=unit-failed@%n
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 -m smsgateway.sources.imap
+ExecStart=/usr/bin/python3 -m smsgateway.sources.imap <account>
 User=smsd
 Restart=always
 RestartSec=30
