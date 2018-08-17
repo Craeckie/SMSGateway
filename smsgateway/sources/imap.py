@@ -15,7 +15,12 @@ def parse_part(part):
     payload = None
     if part.get_content_maintype() == 'text':
         type = part.get_content_subtype()
-        payload = part.get_payload(decode=True).decode('UTF-8')
+        charset = 'UTF-8'
+        charsets = part.get_charsets()
+        if len(charsets) > 0:
+            charset = charsets[0]
+        app_log.debug(f"Decoding payload with charset {charset}")
+        payload = part.get_payload(decode=True).decode(charset)
         if type == 'html':
             b = BeautifulSoup(payload, 'html.parser')
             for s in b(["script", "style"]):
@@ -41,7 +46,7 @@ def parse_fetch(fetch):
               else:
                   body = payload
     else:
-        body = parse_part(part)
+        body = parse_part(msg)
     if body and attachment:
         body += "\n\n----\n\n%s" % attachment
     elif not body:
@@ -71,25 +76,33 @@ def fetch_messages(server, num):
             app_log.warning("No RFC822 in this fetch: %s" % fetch)
     return messages
 
+def forward_messages(messages):
+    for msg in messages:
+        body = msg['Body']
+        del msg['Body']
+        app_log.debug("Forwarding message: %s" % str(msg))
+        sink_sms.send_dict(IDENTIFIER, body, msg)
+
 def login(name):
     account = EMAIL_ACCOUNTS[name]
     server = IMAPClient(account['Host'])
     server.login(account['User'], account['Password'])
-    inbox = server.select_folder('INBOX')
+    inbox = server.select_folder('INBOX', readonly=True)
     app_log.debug("Inbox: %s" % inbox)
     return server
 
 def wait_idle(server, account):
+    last_exists = 0
+    unseen = server.folder_status('INBOX', what=b'UNSEEN')[b'UNSEEN']
     app_log.info("Waiting for IDLE response..")
     server.idle()
-    last_exists = 0
     loop_start = time.time()
     while True:
         # noop = server.noop()
         # app_log.debug("Server returned %s" % noop)
         app_log.debug("Checking IDLE")
         start = time.time()
-        responses = server.idle_check(timeout=30)
+        responses = server.idle_check(timeout=10)
         diff = time.time() - start
         app_log.debug("Server sent: %s" % responses if responses else "nothing")
         if responses:
@@ -103,19 +116,35 @@ def wait_idle(server, account):
                     num += 1
                   last_exists = n
             if num > 0:
-              server.idle_done()
+              try:
+                  server.idle_done()
+              except:
+                  pass
               messages = fetch_messages(server, num)
-              for msg in messages:
-                  body = msg['Body']
-                  del msg['Body']
-                  app_log.debug("Forwarding message: %s" % str(msg))
-                  sink_sms.send_dict(IDENTIFIER, body, msg)
+              forward_messages(messages)
               server.idle()
         elif diff < 5:
             app_log.warning(f"IDLE check took only {diff} seconds!\nNeed to reconnect..")
-            server = login()
+            server = login(account)
+        elif time.time() - loop_start >= 60:
+            # Still connected but IDLE empty -> check if really no change
+            app_log.debug("Checking if unseen messages increased..")
+            try:
+                server.idle_done()
+            except:
+                pass
+            new_unseen = server.folder_status('INBOX', what=b'UNSEEN')[b'UNSEEN']
+            diff = new_unseen - unseen
+            if diff > 0:
+              app_log.info(f"Found {diff} unseen messages!")
+              messages = fetch_messages(server, diff)
+              forward_messages(messages)
+              unseen = new_unseen
+            else:
+              app_log.debug(f"No new unseen messages: {new_unseen} = {unseen}")
+            server.idle()
 
-        if time.time() - loop_start > 60*20:
+        if time.time() - loop_start > 60*15:
             app_log.info("IDLE timeout elapsed, re-establishing connection..")
             try:
                 server.idle_done()
