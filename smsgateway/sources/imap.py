@@ -117,8 +117,14 @@ def wait_idle(server, account):
 
         if time.time() - loop_start > 60*20:
             app_log.info("IDLE timeout elapsed, re-establishing connection..")
-            server.idle_done()
-            server.logout()
+            try:
+                server.idle_done()
+            except:
+                pass
+            try:
+                server.logout()
+            except:
+                pass
             server = login(account)
             loop_start = time.time()
 
