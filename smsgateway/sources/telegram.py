@@ -63,8 +63,7 @@ async def callback(event):
             msg += await parseReplyTo(client, app_log, event)
           except Exception as e:
             msg += f"Reply parsing failed: {e}\n\n"
-            app_log.warning(e)
-            app_log.warning(traceback.format_exc())
+            app_log.warning(e, exc_info=True)
             app_log.warning(event.stringify())
 
       if event.message.reply_markup:
@@ -72,8 +71,7 @@ async def callback(event):
             chat_info.update(parseButtons(event.message.reply_markup))
           except Exception as e:
             msg += f"Button parsing failed: {e}\n\n"
-            app_log.warning(e)
-            app_log.warning(traceback.format_exc())
+            app_log.warning(e, exc_info=True)
             app_log.warning(event.stringify())
 
 
@@ -102,8 +100,7 @@ async def callback(event):
     except Exception as e:
         event = event.stringify()
         trace = traceback.format_exc()
-        app_log.warning(event)
-        app_log.warning(trace)
+        app_log.warning(event, exc_info=True)
         app_log.warning(str(chat_info))
         sink_sms.send_notif("Telegram message parsing failed!\n%s" % '\n'.join([event, trace, str(chat_info)]))
 
@@ -129,8 +126,7 @@ async def main():
     try:
         await asyncio.wait_for(client.catch_up(), timeout=15)
     except Exception as e:
-        app_log.warning("client.catch_up failed with Exception: %s" % e)
-        app_log.warning(traceback.format_exc())
+        app_log.warning("client.catch_up failed with Exception: %s" % e, exc_info=True)
     # signal.alarm(0)
 
     app_log.info("Listening to messages..")

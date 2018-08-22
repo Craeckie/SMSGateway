@@ -16,7 +16,7 @@ def setup_logging(service_name):
 
     std_handler = StreamHandler(sys.stdout)
     std_handler.setFormatter(syslog_formatter)
-    std_handler.setLevel(logging.DEBUG)
+    std_handler.setLevel(LOG_STD_LEVEL)
 
     app_log = logging.getLogger('root')
     app_log.setLevel(logging.DEBUG)

@@ -1,7 +1,10 @@
+import logging
+
 # General Settings
 CONTROL_PHONES = ['4912312312312',]
 
 LOG_DIR = '/var/log/smsgateway/'
+LOG_STD_LEVEL = logging.DEBUG
 
 SMS_DIR = '/var/spool/sms/outgoing/'
 
@@ -50,6 +53,7 @@ SERVICES = ['dhcpcd',
             'source-telegram',
             'source-whatsapp',
             'source-signal',
+            'source-email',
             'source-facebook',
             'smstools',
             'wpa_supplicant',

@@ -4,7 +4,7 @@ from smsgateway import sink_sms
 from smsgateway.config import *
 from smsgateway.sources.utils import *
 
-app_log = setup_logging("telegram")
+app_log = setup_logging("signal")
 
 IDENTIFIER = "SG"
 
@@ -34,7 +34,7 @@ def listen():
                     app_log.info("Message from myself: %s" % line)
                     continue
             except KeyError:
-              app_log.warning("KeyError in message \"%s\"" % line_cleaned)
+              app_log.warning("KeyError in message \"%s\"" % line_cleaned, exc_info=True)
             # with open ('/var/log/signal.log', 'a') as f:
             #   f.write("%s\n" % line)
             app_log.info("Unknown message: %s" % line)

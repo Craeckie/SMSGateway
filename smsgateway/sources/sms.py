@@ -5,7 +5,7 @@ from smsgateway import sink_sms
 from smsgateway.config import *
 from smsgateway.sources.utils import *
 
-app_log = setup_logging("telegram")
+app_log = setup_logging("sms")
 
 src_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -150,7 +150,7 @@ def main():
       elif args.event == 'FAILED':
         if args.file:
           app_log.warning("SMS failed. Process:")
-          app_log.warning("- Stopping smstools.. ", end='')
+          app_log.warning("- Stopping smstools.. ")
           (result, out) = run_cmd([SUDO_PATH, SYSTEMCTL_PATH, 'stop', 'smstools'])
           if result == 0:
             app_log.info("Success!")
@@ -159,7 +159,9 @@ def main():
 
           app_log.info("- Resending: %s" % args.file)
           resendSMS(args.file)
-          app_log.warning("- Reboot!", flush=True)
+          app_log.warning("- Reboot!")
+          for handler in app_log.handlers:
+            handler.flush()
           app_log.warning('')
           (res, out) = run_cmd([SUDO_PATH, REBOOT_PATH], "Reboot")
           if res != 0:
@@ -170,4 +172,7 @@ def main():
         app_log.error("Event is %s, expected RECEIVED" % args.event)
 
 if __name__ == '__main__':
-    main()
+    try:
+      main()
+    except Exception as e:
+      app_log.error("Execution failed: %s" % e, exc_info=True)

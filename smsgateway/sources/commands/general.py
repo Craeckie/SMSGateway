@@ -89,7 +89,7 @@ def status(full=False):
     ret = 'Status of SMSGateway:\n'
     ret += 'Uptime: %s, Temp: %s\n' % (_stat_uptime(), _stat_temp())
     ret += 'Free space: %s\n' % _stat_df()
-    ret += 'SMS queue: %s' % _stat_sms()
+    ret += 'SMS queue: %s\n' % _stat_sms()
     net_inf = NETWORK_INTERFACES_ALL if full else NETWORK_INTERFACES
     wifi_inf = WIFI_INTERFACES_ALL if full else WIFI_INTERFACES
 

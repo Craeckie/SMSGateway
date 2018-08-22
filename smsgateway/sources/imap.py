@@ -5,6 +5,7 @@ from smsgateway.config import *
 
 from imapclient import IMAPClient
 from email.header import decode_header, make_header
+from email.utils import parseaddr
 from bs4 import BeautifulSoup
 
 IDENTIFIER = "EM"
@@ -52,8 +53,13 @@ def parse_fetch(fetch):
     elif not body:
         body = "No body!"
     items = {'Body': body}
-    for name in ['Subject', 'From', 'To']:
+    for name in ['Subject', 'From']:
         items[name] = make_header(decode_header(msg[name]))
+    to_addr = parseaddr(msg['To'])
+    to = to_addr[len(to_addr) - 1]
+    if not to:
+        to = make_header(decode_header(msg['To']))
+    items['To'] = to
 
     return items
 def fetch_messages(server, num):
