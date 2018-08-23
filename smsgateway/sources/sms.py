@@ -10,17 +10,8 @@ app_log = setup_logging("sms")
 src_path = os.path.dirname(os.path.abspath(__file__))
 
 command_list = []
-mods = []
 
-for file in os.listdir(os.path.join(src_path, 'commands')):
-      ext_file = os.path.splitext(file)
-
-      if ext_file[1] == '.py' and not ext_file[0] == '__init__':
-          app_log.debug("Importing %s" % ext_file[0])
-          m = importlib.import_module('smsgateway.sources.commands.' + ext_file[0])
-          mods.append(m)
-
-def handleCommand(text):
+def handleCommand(mods, text):
   lines = text.strip().split('\n')
   cmd = lines[0].lower().strip()
   ret = "Unknown Command:\n%s" % text
@@ -51,46 +42,98 @@ def handleCommand(text):
   if ret:
     sink_sms.send_to(to, ret)
 
-def handleSMS(f):
-    app_log.info("Received SMS, file: %s" % f)
-    From = None
+def readSMS(filename, received=True):
+    direction = "From" if received else "To"
+    address = None
     textStarted = False
     decodeUCS2 = False
     text = ''
-    with open(f, 'rb') as f:
+    decoded_lines = []
+    data = {}
+    with open(filename, 'rb') as f:
       app_log.info("Opened received SMS")
       lines = f.readlines()
       for line in lines:
-        if textStarted == True and decodeUCS2:
-          line = line.decode("utf-16-be")
-        else:
-          line = line.decode("iso8859-15")
+          if textStarted == True and decodeUCS2:
+            line = line.decode("utf-16-be")
+          else:
+            line = line.decode("iso8859-15")
+          line = line.rstrip()
+          decoded_lines.append(line)
+          if textStarted == True:
+              text += "%s\n" % line
+          else:
+              m = re.match(f"{direction}: ([0-9]+)", line)
+              m2 = re.match(f"{direction}: ([A-Za-z0-9]+)", line)
+              mAlpha = re.match("Alphabet: ([A-Z0-9]+)", line)
+              if mAlpha:
+                  alpha = mAlpha.group(1)
+                  if alpha == "UCS2":
+                      decodeUCS2 = True
+                  elif alpha == "ISO":
+                      decodeUCS2 = False
+              elif m or m2:
+                  if m:
+                    address = "+%s" % m.group(1)
+                  else:
+                    address = "%s" % m2.group(1)
+                    app_log.info("Number is not numeric!")
+                  app_log.info(f"{direction}: %s" % address)
+              elif line == "":
+                  textStarted = True
+              else:
+                  m = re.match(f"([^:]+): (.+)", line)
+                  if m:
+                      data[m.group(1)] = m.group(2)
+    data.update({
+      'address': address,
+      'text': text,
+      'lines': decoded_lines
+    })
+    return data
 
-        line = line.rstrip()
-        m = re.match("From: ([0-9]+)", line)
-        m2 = re.match("From: ([A-Za-z0-9]+)", line)
-        mAlpha = re.match("Alphabet: ([A-Z0-9]+)", line)
-        if textStarted == True:
-            text += "%s\n" % line
-        elif m or m2:
-            if m:
-              From = "+%s" % m.group(1)
-            else:
-              From = "%s" % m2.group(1)
-              app_log.info("Number is not numeric!")
-            app_log.info("From: %s" % From)
-        elif mAlpha:
-            alpha = mAlpha.group(1)
-            if alpha == "UCS2":
-                decodeUCS2 = True
-            elif alpha == "ISO":
-                decodeUCS2 = False
-        elif line == "":
-            textStarted = True
-
-    if From and textStarted:
+def handleSMS(mods, f):
+    app_log.info("Received SMS, file: %s" % f)
+    data = readSMS(f, received=True)
+    # From = None
+    # textStarted = False
+    # decodeUCS2 = False
+    # text = ''
+    # with open(f, 'rb') as f:
+    #   app_log.info("Opened received SMS")
+    #   lines = f.readlines()
+    #   for line in lines:
+    #     if textStarted == True and decodeUCS2:
+    #       line = line.decode("utf-16-be")
+    #     else:
+    #       line = line.decode("iso8859-15")
+    #
+    #     line = line.rstrip()
+    #     m = re.match("From: ([0-9]+)", line)
+    #     m2 = re.match("From: ([A-Za-z0-9]+)", line)
+    #     mAlpha = re.match("Alphabet: ([A-Z0-9]+)", line)
+    #     if textStarted == True:
+    #         text += "%s\n" % line
+    #     elif m or m2:
+    #         if m:
+    #           From = "+%s" % m.group(1)
+    #         else:
+    #           From = "%s" % m2.group(1)
+    #           app_log.info("Number is not numeric!")
+    #         app_log.info("From: %s" % From)
+    #     elif mAlpha:
+    #         alpha = mAlpha.group(1)
+    #         if alpha == "UCS2":
+    #             decodeUCS2 = True
+    #         elif alpha == "ISO":
+    #             decodeUCS2 = False
+    #     elif line == "":
+    #         textStarted = True
+    From = data['address']
+    text = data['text']
+    if From and text:
       if From in ['+%s' % num for num in CONTROL_PHONES]:
-        handleCommand(text)
+        handleCommand(mods, text)
       else: # SMS from someone else
         app_log.info("Sending SMS")
         sink_sms.send("SMS", text, From)
@@ -98,29 +141,36 @@ def handleSMS(f):
       app_log.error("Couldn't parse incoming sms!")
 
 def resendSMS(f):
-  textStarted = False
-  To = None
-  textStarted = None
-  wholeText = ''
-  text = ''
-  with open(f, 'r', encoding="8859") as f:
-    app_log.info("Opened failed SMS")
-    for line in f:
-      line = line.rstrip()
-      wholeText += line
-      if textStarted == True:
-        text += "%s\n" % line
-      else:
-        m = re.match("To: ([0-9]+)", line)
-        m_fail = re.match("Fail_reason: (.*)", line)
-        if m:
-          To = "+%s" % m.group(1)
-        elif m_fail:
-          fail_reason = m_fail.group(1)
-          app_log.warning("Fail reason: %s" % fail_reason)
-        elif line == "":
-          textStarted = True
-    if To and textStarted:
+  # textStarted = False
+  # To = None
+  # textStarted = None
+  # wholeText = ''
+  # text = ''
+  # with open(f, 'r', encoding="8859") as f:
+  #   app_log.info("Opened failed SMS")
+  #   for line in f:
+  #     line = line.rstrip()
+  #     wholeText += line
+  #     if textStarted == True:
+  #       text += "%s\n" % line
+  #     else:
+  #       m = re.match("To: ([0-9]+)", line)
+  #       m_fail = re.match("Fail_reason: (.*)", line)
+  #       if m:
+  #         To = "+%s" % m.group(1)
+  #       elif m_fail:
+  #         fail_reason = m_fail.group(1)
+  #         app_log.warning("Fail reason: %s" % fail_reason)
+  #       elif line == "":
+  #         textStarted = True
+
+    data = readSMS(f, received=False)
+    To = data['address']
+    text = data['text']
+    fail_reason = "N/A"
+    if 'Fail_reason' in data:
+      fail_reason = data['Fail_reason']
+    if To and text:
       if To in CONTROL_PHONES:
         app_log.warning("Resending SMS to CONTROL_PHONE")
         new_text = "RESEND: %s\n%s" % (fail_reason, text)
@@ -131,11 +181,11 @@ def resendSMS(f):
         new_text = "RESEND: %s\n%s" % (fail_reason, text)
         sink_sms.send_notif(new_text)
     else:
-      new_text = "Invalid failed SMS:\n%s" % wholeText
+      new_text = "Invalid failed SMS:\n%s" % '\n'.join(data['lines'])
       app_log.error(new_text)
       sink_sms.send_notif(new_text)
 
-def main():
+def main(mods):
     app_log.info(src_path)
     parser = argparse.ArgumentParser()
     parser.add_argument("event")
@@ -146,7 +196,7 @@ def main():
       app_log.error("Unknown command, use -h for help")
     else:
       if args.event == "RECEIVED":
-        handleSMS(args.file)
+        handleSMS(mods, args.file)
       elif args.event == 'FAILED':
         if args.file:
           app_log.warning("SMS failed. Process:")
@@ -173,6 +223,20 @@ def main():
 
 if __name__ == '__main__':
     try:
-      main()
+      mods = []
+
+      for file in os.listdir(os.path.join(src_path, 'commands')):
+            ext_file = os.path.splitext(file)
+
+            if ext_file[1] == '.py' and not ext_file[0] == '__init__':
+                mod_name = 'smsgateway.sources.commands.' + ext_file[0]
+                app_log.info("Importing %s" % ext_file[0])
+                spec = importlib.util.find_spec(mod_name)
+                if not spec:
+                  m = importlib.import_module(mod_name)
+                  mods.append(m)
+                  mod_names.add(mod_name)
+                  print(mod_names)
+      main(mods)
     except Exception as e:
       app_log.error("Execution failed: %s" % e, exc_info=True)
