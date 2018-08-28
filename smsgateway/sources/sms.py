@@ -224,19 +224,22 @@ def main(mods):
 if __name__ == '__main__':
     try:
       mods = []
+      mod_specs = []
 
       for file in os.listdir(os.path.join(src_path, 'commands')):
             ext_file = os.path.splitext(file)
 
             if ext_file[1] == '.py' and not ext_file[0] == '__init__':
                 mod_name = 'smsgateway.sources.commands.' + ext_file[0]
-                app_log.info("Importing %s" % ext_file[0])
                 spec = importlib.util.find_spec(mod_name)
-                if not spec:
+                if spec not in mod_specs:
+                  mod_specs.append(spec)
+                  app_log.info("Importing %s" % ext_file[0])
                   m = importlib.import_module(mod_name)
                   mods.append(m)
-                  mod_names.add(mod_name)
-                  print(mod_names)
+                  # mod_names.add(mod_name)
+                  # print(mod_names)
+
       main(mods)
     except Exception as e:
       app_log.error("Execution failed: %s" % e, exc_info=True)

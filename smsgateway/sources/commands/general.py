@@ -51,9 +51,12 @@ def _stat_service(service, status=Status.BOTH):
     if result != 0:
         is_active = 'Stopped'
         result = subprocess.call([SYSTEMCTL_PATH, 'is-failed', service])
-        if result != 0:
+        if result == 0:
             is_active += " (failed)"
-    return '%s: %s, %s\n' % (service, is_active, is_enabled)
+    if status == Status.BOTH:
+      return '%s: %s, %s\n' % (service, is_active, is_enabled)
+    else:
+      return '%s: %s\n' % (service, is_active)
 
 from datetime import timedelta
 def _stat_uptime():
