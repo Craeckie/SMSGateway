@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os, argparse, re, subprocess, time
+import os, argparse, re, subprocess, time, traceback
 import importlib
 from smsgateway import sink_sms
 from smsgateway.config import *
@@ -26,7 +26,10 @@ def handleCommand(mods, text):
           try:
               ret = c.run(lines)
           except Exception as e:
-              sink_sms.send_notif("Run failed for command %s:\n%s" % (cmd, e))
+              trace = traceback.format_exc()
+              msg = "Run failed for command %s:\n%s\n%s" % (cmd, e, trace)
+              app_log.error(msg)
+              sink_sms.send_notif(msg)
           break
   # elif len(lines) > 2:
   #   if cmd == "SMS":

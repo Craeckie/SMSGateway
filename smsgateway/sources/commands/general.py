@@ -50,9 +50,11 @@ def _stat_service(service, status=Status.BOTH):
     is_active = 'Running'
     if result != 0:
         is_active = 'Stopped'
-        result = subprocess.call([SYSTEMCTL_PATH, 'is-failed', service])
-        if result == 0:
-            is_active += " (failed)"
+        result = subprocess.run([SYSTEMCTL_PATH, 'is-failed', service],
+            stdout=subprocess.PIPE,
+            universal_newlines=True)
+        if result:
+            is_active += f" ({result.stdout.strip()})"
     if status == Status.BOTH:
       return '%s: %s, %s\n' % (service, is_active, is_enabled)
     else:

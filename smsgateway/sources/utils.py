@@ -1,5 +1,16 @@
 import subprocess, re, os
+import gzip, shutil
 from smsgateway.config import *
+
+def _logging_namer(name):
+    return name + ".gz"
+def _logging_rotater(source, dest):
+    with open(source, "rb") as sf:
+        # data = sf.read()
+        # compressed = zlib.compress(data, 9)
+        with gzip.open(dest, 'wb') as df:
+            shutil.copyfileobj(sf, df)
+    os.remove(source)
 
 def setup_logging(service_name):
     import logging
@@ -8,9 +19,11 @@ def setup_logging(service_name):
 
     filelog_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
     syslog_formatter = logging.Formatter('%(message)s')
-    logFile = os.path.join(LOG_DIR, '%s.log' % service_name)
-    file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
-                                     backupCount=2, encoding=None, delay=0)
+    logFile = os.path.join(LOG_DIR, f"{service_name}.log")
+    file_handler = RotatingFileHandler(logFile, mode='a', maxBytes=20*1024*1024,
+                                     backupCount=5, encoding=None, delay=0)
+    file_handler.rotator = _logging_rotater
+    file_handler.namer = _logging_namer
     file_handler.setFormatter(filelog_formatter)
     file_handler.setLevel(logging.DEBUG)
 
