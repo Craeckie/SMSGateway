@@ -1,6 +1,7 @@
 import datetime, os
 from smsgateway.config import *
 from smsgateway.sources.utils import *
+from cryptography.fernet import Fernet
 
 def send_dict(type, text, headers):
     send_to(CONTROL_PHONES[0], format_sms(type, text, headers))
@@ -34,11 +35,20 @@ def send_notif(text):
 
 def send_to(to, text):
     print("Sending SMS:\n%s" % text)
-    header = '\n'.join([f"To: {to}", "Alphabet: UCS-2", "", ""])
+
     d = datetime.datetime.now().strftime("%y-%m-%d_%H-%M-%S.%f")[:-3]
     p = os.path.join(SMS_DIR, d)
+    if KEY:
+        alphabet = "ISO"
+        f = Fernet(KEY)
+        encrypted = f.encrypt(text.encode("utf-8"))
+        msg = "%8%" + encrypted.decode("utf-8")
+    else:
+        alphabet = "UCS-2"
+        msg = text
+    header = '\n'.join([f"To: {to}", f"Alphabet: {alphabet}", "", ""])
     print("Writing sms to %s" % p)
     with open(p, 'wb') as f:
         f.write(header.encode("UTF-8"))
-        f.write(text.encode("utf-16-be"))
+        f.write(msg.encode("UTF-8"))
         f.flush()

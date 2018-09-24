@@ -13,6 +13,9 @@ REBOOT_PATH = '/sbin/reboot'
 APT_PATH = '/usr/bin/apt'
 SUDO_PATH = '/usr/bin/sudo'
 
+# Encryption
+KEY = "cVvgeE32jjDRIlUOBkKbdFsXVKAp3AsdGGLCZwy0Yuk="
+
 # Telegram
 TELEGRAM_CLI_PATH = '/home/smsd/tg/bin/telegram-cli'
 TELEGRAM_KEY_PATH = '/home/smsd/tg/tg-server.pub'

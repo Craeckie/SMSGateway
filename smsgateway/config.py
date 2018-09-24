@@ -2,6 +2,8 @@ import os, sys
 from appdirs import *
 import importlib.util
 
+KEY = None
+
 CONFIG_DIR = user_config_dir(appname="smsgateway", appauthor="craeckie")
 if not os.path.exists(CONFIG_DIR):
     os.mkdir(CONFIG_DIR)
