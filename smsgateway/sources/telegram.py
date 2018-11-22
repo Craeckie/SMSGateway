@@ -124,7 +124,7 @@ async def main():
     # signal.signal(signal.SIGALRM, handler)
     # signal.alarm(10)
     try:
-        await asyncio.wait_for(client.catch_up(), timeout=15)
+        await asyncio.wait_for(client.catch_up(), timeout=30)
     except Exception as e:
         app_log.warning("client.catch_up failed with Exception: %s" % e, exc_info=True)
     # signal.alarm(0)
