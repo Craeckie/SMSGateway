@@ -1,10 +1,10 @@
 import datetime, os
-from smsgateway.config import *
+import smsgateway.config as conf
 from smsgateway.sources.utils import *
 from cryptography.fernet import Fernet
 
 def send_dict(type, text, headers):
-    send_to(CONTROL_PHONES[0], format_sms(type, text, headers))
+    send_to(conf.CONTROL_PHONES[0], format_sms(type, text, headers))
 def send(type, text, _from, phone=None, group=None):
     lines = [
         type,
@@ -19,7 +19,7 @@ def send(type, text, _from, phone=None, group=None):
             "",
             text
         ]
-    send_to(CONTROL_PHONES[0], '\n'.join(lines))
+    send_to(conf.CONTROL_PHONES[0], '\n'.join(lines))
 
 def send_from_me(type, text, to):
     lines = [
@@ -28,19 +28,19 @@ def send_from_me(type, text, to):
         "",
         text
     ]
-    send_to(CONTROL_PHONES[0], '\n'.join(lines))
+    send_to(conf.CONTROL_PHONES[0], '\n'.join(lines))
 
 def send_notif(text):
-    send_to(CONTROL_PHONES[0], text)
+    send_to(conf.CONTROL_PHONES[0], text)
 
 def send_to(to, text):
     print("Sending SMS:\n%s" % text)
 
     d = datetime.datetime.now().strftime("%y-%m-%d_%H-%M-%S.%f")[:-3]
     p = os.path.join(SMS_DIR, d)
-    if KEY:
+    if conf.KEY:
         alphabet = "ISO"
-        f = Fernet(KEY)
+        f = Fernet(conf.KEY)
         encrypted = f.encrypt(text.encode("utf-8"))
         msg = "%8%" + encrypted.decode("utf-8")
     else:
