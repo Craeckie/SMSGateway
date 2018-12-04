@@ -29,6 +29,9 @@ SIGNAL_CLI_PATH = '/usr/local/bin/signal-cli'
 FB_COOKIE_PATH = '/home/smsd/facebook-session.txt'
 FB_CREDENTIALS = ('me@example.com', 'mysecretpassword')
 
+# Slack
+SL_TOKEN = 'xxxx'
+
 # E-Mail
 EMAIL_ACCOUNTS = {
     'example_name': {
