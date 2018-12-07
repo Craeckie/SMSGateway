@@ -4,6 +4,7 @@ import importlib
 from smsgateway import sink_sms
 from smsgateway.config import *
 from smsgateway.sources.utils import *
+from cryptography.fernet import Fernet
 
 app_log = setup_logging("sms")
 
@@ -12,6 +13,12 @@ src_path = os.path.dirname(os.path.abspath(__file__))
 command_list = []
 
 def handleCommand(mods, text):
+  if conf.KEY and text.startswith("%8%"):
+      text = text.strip()[3:]
+      print(f'Trying to decrypt "{text}"')
+      f = Fernet(conf.KEY)
+      decrypted = f.decrypt(text.encode("utf-8"))
+      text = decrypted.decode("utf-8")
   lines = text.strip().split('\n')
   cmd = lines[0].lower().strip()
   ret = "Unknown Command:\n%s" % text
