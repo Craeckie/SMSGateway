@@ -17,6 +17,7 @@ setuptools.setup(
         "fbchat",
         "arrow",
         'imapclient',
-        'cryptography'
+        'cryptography',
+        'bs4',
     ]
 )
