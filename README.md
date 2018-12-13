@@ -50,7 +50,7 @@ sudo pip install fbchat
 Uses [signal-cli](https://github.com/AsamK/signal-cli)
 ```bash
 sudo apt install openjdk-8-jre-headless
-wget https://github.com/AsamK/signal-cli/releases/download/v0.5.6/signal-cli-0.5.6.tar.gz
+wget https://github.com/AsamK/signal-cli/releases/download/v0.6.1/signal-cli-0.6.1.tar.gz
 sudo tar xvf signal-cli-*.tar.gz -C /opt
 sudo ln -svf /opt/signal-cli-"${VERSION}"/bin/signal-cli /usr/local/bin/
 signal-cli link

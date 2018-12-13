@@ -5,17 +5,6 @@ from smsgateway import sink_sms
 
 import logging
 from logging.handlers import RotatingFileHandler
-log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s')
-logFile = os.path.join(LOG_DIR, 'send_signal.log')
-my_handler = RotatingFileHandler(logFile, mode='a', maxBytes=5*1024*1024,
-                                 backupCount=2, encoding=None, delay=0)
-my_handler.setFormatter(log_formatter)
-my_handler.setLevel(logging.INFO)
-app_log = logging.getLogger('root')
-app_log.setLevel(logging.INFO)
-app_log.addHandler(my_handler)
-
-command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 
 def check(cmd, multiline):
@@ -27,6 +16,12 @@ def check(cmd, multiline):
 
 
 def run(lines):
+    global app_log, command_regex
+
+    app_log = setup_logging("signal-send")
+
+    command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
+
     app_log.info("Forwarding Signal Message")
     toL = lines[1]
     m = re.match("To:? (.*)$", toL)

@@ -14,19 +14,24 @@ def check(cmd, multiline):
 
 
 def run(lines):
-    print("Forwarding SMS")
+    global IDENTIFIER, app_log
+
+    IDENTIFIER = "SMS"
+    app_log = setup_logging("sms-send")
+
+    app_log.info("Forwarding SMS")
     toL = lines[1]
     m = re.match("To: ([0-9 +]+)", toL)
     if m:
       to = m.group(1).replace(' ', '')
-      print("Matched To: %s" % to)
+      app_log.info("Matched To: %s" % to)
       msg = '\n'.join(lines[2:])
-      print("Sending SMS:\n%s" % msg)
+      app_log.debug("Sending SMS:\n%s" % msg)
       sink_sms.send_to(to, msg)
       ret = "Sent SMS to %s!" % to
     else:
       ret = "Couldn't match To: %s" % to
-      print(ret)
+      app_log.error(ret)
     return ret
 
 command_list.append({

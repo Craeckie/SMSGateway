@@ -14,12 +14,8 @@ APT_PATH = '/usr/bin/apt'
 SUDO_PATH = '/usr/bin/sudo'
 
 # Encryption
-KEY = "cVvgeE32jjDRIlUOBkKbdFsXVKAp3AsdGGLCZwy0Yuk="
-
-# Telegram
-TELEGRAM_CLI_PATH = '/home/smsd/tg/bin/telegram-cli'
-TELEGRAM_KEY_PATH = '/home/smsd/tg/tg-server.pub'
-TG_USER_ID = 123123123
+# Generate with python -c 'from cryptography.fernet import Fernet as f; print(f.generate_key())'
+KEY = "xyz="
 
 # Signal
 SIGNAL_NUMBER = '+4912312312312'

@@ -4,11 +4,11 @@ from smsgateway.config import *
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 
-commands = ['stat', 'reboot', 'shutdown now', 'apt update', 'apt upgrade']
-command_regex = re.compile(r'^(?P<command>[a-zA-Z ]+?)( full)?$')
-
-
 def check(cmd, multiline):
+    global commands
+
+    commands = ['stat', 'reboot', 'shutdown now', 'apt update', 'apt upgrade']
+    command_regex = re.compile(r'^(?P<command>[a-zA-Z ]+?)( full)?$')
     # print("Checking %s" % cmd)
     match = command_regex.match(cmd)
     if match:

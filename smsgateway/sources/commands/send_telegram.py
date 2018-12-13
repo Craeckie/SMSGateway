@@ -15,18 +15,9 @@ from telethon.tl.types import Chat, User, Channel, \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
 
 
-app_log = setup_logging("telegram-send")
-
-IDENTIFIER = "TG"
-
-command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
-
-api_id = 242101
-api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
-
-session_path = os.path.join(CONFIG_DIR, 'telegram-send')
-
 def check(cmd, multiline):
+    global IDENTIFIER
+    IDENTIFIER = "TG"
     # print("Checking %s" % cmd)
     if cmd.lower() == IDENTIFIER.lower() and multiline:
       return True
@@ -87,7 +78,20 @@ async def send_message(message, to_matched):
     # ])
     return (True, msg)
 
+def init():
+    global app_log, IDENTIFIER, command_regex, api_id, api_hash, session_path
+    app_log = setup_logging("telegram-send")
+    IDENTIFIER = "TG"
+    command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
+
+    api_id = 242101
+    api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
+
+    session_path = os.path.join(CONFIG_DIR, 'telegram-send')
+
 def run(lines):
+    init()
+
     app_log.info("Forwarding Telegram Message")
     messageStarted = False
     to_matched = None
@@ -118,6 +122,7 @@ def run(lines):
 
 
 if __name__ == '__main__':
+    init()
     client = TelegramClient(session_path, api_id, api_hash)
     if not client.start():
         app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.sources.commands.send_telegram!")

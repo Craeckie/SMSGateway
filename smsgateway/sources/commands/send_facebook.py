@@ -7,20 +7,23 @@ from smsgateway.sources.utils import *
 from fbchat.models import *
 from smsgateway.sources.facebook_utils import *
 
-IDENTIFIER = "FB"
-
-app_log = setup_logging("facebook-send")
-
-
 def check(cmd, multiline):
+    global IDENTIFIER
+    IDENTIFIER = "FB"
+
     # app_log.info("Checking %s" % cmd)
-    if cmd.lower() == 'fb' and multiline:
+    if cmd.lower() == IDENTIFIER.lower() and multiline:
       return True
     else:
       return False
 
 
 def run(lines):
+    global IDENTIFIER, app_log
+
+    IDENTIFIER = "FB"
+    app_log = setup_logging("facebook-send")
+
     app_log.info("Forwarding Facebook Message")
     messageStarted = False
     to_matched = None

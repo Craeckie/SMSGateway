@@ -103,6 +103,10 @@ async def callback(event):
         app_log.warning(event, exc_info=True)
         app_log.warning(str(chat_info))
         sink_sms.send_notif("Telegram message parsing failed!\n%s" % '\n'.join([event, trace, str(chat_info)]))
+    try:
+        client.session.save()
+    except Exception as e:
+        app_log.warning("Could not save session:\n" + e)
 
 @client.on(events.MessageDeleted())
 async def callback_delete(event):
