@@ -19,5 +19,7 @@ setuptools.setup(
         'imapclient',
         'cryptography',
         'bs4',
+        'slackclient',
+        'asyncio',
     ]
 )

@@ -56,6 +56,10 @@ sudo ln -svf /opt/signal-cli-"${VERSION}"/bin/signal-cli /usr/local/bin/
 signal-cli link
 ```
 
+### Slack
+Go to https://api.slack.com/custom-integrations/legacy-tokens
+Sign in and create a token
+
 ### WhatsApp
 Uses [Yowsup](https://github.com/tgalal/yowsup)
 ```bash
