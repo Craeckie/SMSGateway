@@ -14,10 +14,19 @@ from telethon.tl.types import Chat, User, Channel, \
   MessageMediaDocument, MessageMediaWebPage, \
   Document, DocumentAttributeFilename, DocumentAttributeSticker
 
+def init():    
+    global app_log, IDENTIFIER, command_regex, api_id, api_hash, session_path
+    app_log = setup_logging("telegram-send")
+    IDENTIFIER = "TG"
+    command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
+
+    api_id = 242101
+    api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
+
+    session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
 def check(cmd, multiline):
-    global IDENTIFIER
-    IDENTIFIER = "TG"
+    init()
     # print("Checking %s" % cmd)
     if cmd.lower() == IDENTIFIER.lower() and multiline:
       return True
@@ -77,17 +86,6 @@ async def send_message(message, to_matched):
     #   message
     # ])
     return (True, msg)
-
-def init():
-    global app_log, IDENTIFIER, command_regex, api_id, api_hash, session_path
-    app_log = setup_logging("telegram-send")
-    IDENTIFIER = "TG"
-    command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
-
-    api_id = 242101
-    api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
-
-    session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
 def run(lines):
     init()

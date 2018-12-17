@@ -3,9 +3,16 @@ from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway import sink_sms
 
-command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
+def init():
+    global command_regex, IDENTIFIER, app_log
+
+    IDENTIFIER = "SMS"
+    app_log = setup_logging("sms-send")
+    command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
 def check(cmd, multiline):
+    init()
+    
     # print("Checking %s" % cmd)
     if cmd.lower() == 'sms' and multiline:
       return True
@@ -14,10 +21,7 @@ def check(cmd, multiline):
 
 
 def run(lines):
-    global IDENTIFIER, app_log
-
-    IDENTIFIER = "SMS"
-    app_log = setup_logging("sms-send")
+    init()
 
     app_log.info("Forwarding SMS")
     toL = lines[1]

@@ -4,11 +4,14 @@ from smsgateway.config import *
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 
-def check(cmd, multiline):
-    global commands
+def init():
+    global commands, command_regex
 
     commands = ['stat', 'reboot', 'shutdown now', 'apt update', 'apt upgrade']
     command_regex = re.compile(r'^(?P<command>[a-zA-Z ]+?)( full)?$')
+
+def check(cmd, multiline):
+    init()
     # print("Checking %s" % cmd)
     match = command_regex.match(cmd)
     if match:
@@ -91,6 +94,8 @@ def _stat_sms():
         return e
 
 def status(full=False):
+    init()
+
     ret = 'Status of SMSGateway:\n'
     ret += 'Uptime: %s, Temp: %s\n' % (_stat_uptime(), _stat_temp())
     ret += 'Free space: %s\n' % _stat_df()
@@ -124,6 +129,7 @@ def status(full=False):
 
 
 def run(lines):
+    init()
     cmd = lines[0]
     # print("Command RE matches!")
     m = command_regex.match(cmd)

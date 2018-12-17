@@ -8,9 +8,11 @@ from email.header import decode_header, make_header
 from email.utils import parseaddr
 from bs4 import BeautifulSoup
 
-IDENTIFIER = "EM"
 
-app_log = None
+def init():
+    global IDENTIFIER, app_log
+    IDENTIFIER = "EM"
+    app_log = setup_logging("email-%s" % account)
 
 def parse_part(part):
     payload = None
@@ -166,14 +168,13 @@ def wait_idle(server, account):
     server.idle_done()
 
 def main():
-    global app_log
+    init()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("account", help="The account name from config.py")
     args = parser.parse_args()
 
     account = args.account
-
-    app_log = setup_logging("email-%s" % account)
 
 
     app_log.info("Logging in..")

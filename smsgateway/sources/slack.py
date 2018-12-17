@@ -8,7 +8,7 @@ from slackclient import SlackClient
 IDENTIFIER = "SL"
 app_log = setup_logging("slack")
 
-sc = SlackClient("xoxp-331701018164-362527692135-503352507650-321d6c8b389d337d3d9de92a1e9c64db")
+sc = SlackClient(SL_TOKEN)
 
 
 def main():
@@ -17,6 +17,7 @@ def main():
     app_log.info("Getting users..")
     if not data['ok']:
         app_log.error("Could not get user information!")
+        app_log.error(f"Token: {SL_TOKEN}")
         app_log.error(data)
         return
     for u in data['members']:
@@ -31,6 +32,7 @@ def main():
     channels = {}
     if not data['ok']:
         app_log.error("Could not get channel information!")
+        app_log.error(f"Token: {SL_TOKEN}")
         app_log.error(data)
         return
     for u in data['channels']:

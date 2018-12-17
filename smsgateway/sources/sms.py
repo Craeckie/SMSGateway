@@ -2,11 +2,11 @@
 import os, argparse, re, subprocess, time, traceback
 import importlib
 from smsgateway import sink_sms
-from smsgateway.config import *
+import smsgateway.config as conf
 from smsgateway.sources.utils import *
 from cryptography.fernet import Fernet
 
-app_log = setup_logging("sms")
+app_log = None
 
 src_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -22,7 +22,7 @@ def handleCommand(mods, text):
   lines = text.strip().split('\n')
   cmd = lines[0].lower().strip()
   ret = "Unknown Command:\n%s" % text
-  to = CONTROL_PHONES[0]
+  to = conf.CONTROL_PHONES[0]
   app_log.info("Message has %s lines" % len(lines))
   #if len(lines) == 1:
   app_log.info("Commands: %s" % str(mods))
@@ -142,7 +142,7 @@ def handleSMS(mods, f):
     From = data['address']
     text = data['text']
     if From and text:
-      if From in ['+%s' % num for num in CONTROL_PHONES]:
+      if From in ['+%s' % num for num in conf.CONTROL_PHONES]:
         handleCommand(mods, text)
       else: # SMS from someone else
         app_log.info("Sending SMS")
@@ -181,7 +181,7 @@ def resendSMS(f):
     if 'Fail_reason' in data:
       fail_reason = data['Fail_reason']
     if To and text:
-      if To in CONTROL_PHONES:
+      if To in conf.CONTROL_PHONES:
         app_log.warning("Resending SMS to CONTROL_PHONE")
         new_text = "RESEND: %s\n%s" % (fail_reason, text)
         sink_sms.send_notif(new_text)
@@ -211,7 +211,7 @@ def main(mods):
         if args.file:
           app_log.warning("SMS failed. Process:")
           app_log.warning("- Stopping smstools.. ")
-          (result, out) = run_cmd([SUDO_PATH, SYSTEMCTL_PATH, 'stop', 'smstools'])
+          (result, out) = run_cmd([conf.SUDO_PATH, conf.SYSTEMCTL_PATH, 'stop', 'smstools'])
           if result == 0:
             app_log.info("Success!")
           else:
@@ -223,7 +223,7 @@ def main(mods):
           for handler in app_log.handlers:
             handler.flush()
           app_log.warning('')
-          (res, out) = run_cmd([SUDO_PATH, REBOOT_PATH], "Reboot")
+          (res, out) = run_cmd([conf.SUDO_PATH, conf.REBOOT_PATH], "Reboot")
           if res != 0:
             app_log.error("Reboot failed: %s" % out)
         else:
@@ -232,6 +232,8 @@ def main(mods):
         app_log.error("Event is %s, expected RECEIVED" % args.event)
 
 if __name__ == '__main__':
+
+    app_log = setup_logging("sms")
     try:
       mods = []
       mod_specs = []
