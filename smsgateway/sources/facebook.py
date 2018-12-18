@@ -6,9 +6,11 @@ from smsgateway.config import *
 from smsgateway.sources.utils import *
 from smsgateway.sources.facebook_utils import *
 
-IDENTIFIER = "FB"
+def init():
+    global IDENTIFIER, app_log
 
-app_log = setup_logging("facebook")
+    IDENTIFIER = "FB"
+    app_log = setup_logging("facebook")
 
 # Subclass fbchat.Client and override required methods
 class EchoBot(Client):
@@ -60,8 +62,8 @@ class EchoBot(Client):
         #     sink_sms.send(IDENTIFIER, message, source_name)
 #            self.sendMessage(message, thread_id=thread_id, thread_type=thread_type)
 
-client = login(FB_CREDENTIALS, FB_COOKIE_PATH, EchoBot)
-
-users = client.fetchAllUsers()
-
-client.listen()
+if __name__ == '__main__':
+    init()
+    client = login(FB_CREDENTIALS, FB_COOKIE_PATH, EchoBot)
+    users = client.fetchAllUsers()
+    client.listen()

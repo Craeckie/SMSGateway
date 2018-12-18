@@ -1,6 +1,7 @@
 import re, subprocess
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
+from smsgateway.sources.utils import *
 
 service_commands = ['start', 'restart', 'stop', 'enable', 'disable', 'status']
 service_regex = re.compile('^(?P<command>[a-zA-Z]+) (?P<service>.+)$')

@@ -6,11 +6,11 @@ import smsgateway.config as conf
 from smsgateway.sources.utils import *
 from cryptography.fernet import Fernet
 
-app_log = None
-
-src_path = os.path.dirname(os.path.abspath(__file__))
-
-command_list = []
+def init():
+    global app_log, src_path, command_list
+    app_log = setup_logging("sms")
+    src_path = os.path.dirname(os.path.abspath(__file__))
+    command_list = []
 
 def handleCommand(mods, text):
   if conf.KEY and text.startswith("%8%"):
@@ -232,8 +232,7 @@ def main(mods):
         app_log.error("Event is %s, expected RECEIVED" % args.event)
 
 if __name__ == '__main__':
-
-    app_log = setup_logging("sms")
+    init()
     try:
       mods = []
       mod_specs = []

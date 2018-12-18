@@ -2,6 +2,7 @@ import re, subprocess
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway import sink_sms
+from smsgateway.sources.utils import *
 
 def init():
     global command_regex, IDENTIFIER, app_log
@@ -12,7 +13,7 @@ def init():
 
 def check(cmd, multiline):
     init()
-    
+
     # print("Checking %s" % cmd)
     if cmd.lower() == 'sms' and multiline:
       return True

@@ -10,21 +10,26 @@ from telethon.tl.functions.users import GetFullUserRequest
 
 from smsgateway.sources.telegram_utils import *
 
-app_log = setup_logging("telegram")
+def init():
+    global IDENTIFIER, app_log, api_id, api_hash, session_path, client
 
-IDENTIFIER = "TG"
+    app_log = setup_logging("telegram")
+    IDENTIFIER = "TG"
 
-api_id = 242101
-api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
-session_path = os.path.join(CONFIG_DIR, 'telegram')
+    api_id = 242101
+    api_hash = "80cbc97ce425aae38c1e0291ef2ab2a4"
+    session_path = os.path.join(CONFIG_DIR, 'telegram')
 
-client = TelegramClient(session_path, api_id, api_hash) #,update_workers=1, spawn_read_thread=False)
-if not client.start():
-    app_log.error("Could not connect! Run python3 -m smsgateway.sources.telegram to authorize!")
-    sys.exit(1)
+    client = TelegramClient(session_path, api_id, api_hash) #,update_workers=1, spawn_read_thread=False)
 
-app_log.info("Started TelegramClient")
 
+if __name__ == '__main__':
+    init()
+    if not client.start():
+        app_log.error("Could not connect! Run python3 -m smsgateway.sources.telegram to authorize!")
+        sys.exit(1)
+
+    app_log.info("Started TelegramClient")
 
 @client.on(events.NewMessage())
 @client.on(events.MessageEdited())

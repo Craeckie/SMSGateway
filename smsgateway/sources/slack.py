@@ -5,13 +5,16 @@ from smsgateway.sources.utils import *
 
 from slackclient import SlackClient
 
-IDENTIFIER = "SL"
-app_log = setup_logging("slack")
-
-sc = SlackClient(SL_TOKEN)
-
+def init():
+    global IDENTIFIER, app_log
+    IDENTIFIER = "SL"
+    app_log = setup_logging("slack")
 
 def main():
+    init()
+
+    sc = SlackClient(SL_TOKEN)
+    
     data = sc.api_call("users.list")
     users = {}
     app_log.info("Getting users..")
