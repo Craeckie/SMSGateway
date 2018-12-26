@@ -5,6 +5,7 @@ After=network.target
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/python3 -m smsgateway.events.service_failed %I
+User=smsd
 
 [Install]
 WantedBy=multi-user.target
