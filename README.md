@@ -21,17 +21,13 @@ pip install smsgateway
 ```
 Copy `smsgateway/config.example.py` to `/home/smsd/.config/smsgateway/config.py` and adapt it.
 
-## Scripts
-In Scripts/ are some small script for handling incoming sms and handling restarts.
-To use the scripts copy them to `/usr/local/bin/`.
+## Handle incoming SMS
+To handling incoming sms `Scripts/smshandler` needs to be copied to the `eventhandler` specified in `smsd.conf`. In the example it points to `/usr/local/bin/smshandler`.
+
+Make sure to make it executable (`chmod +x`).
 
 ### Logging
 `mkdir /var/log/smsgateway/ && chown -R smsd:smsd /var/log/smsgateway/`
-
-
-### Handle SMS messages
-Copy `Scripts/smshandler` to `/usr/local/bin/` and make executable:
-`chmod +x /usr/local/bin/smshandler`
 
 ### Permission to control systemctl, shutdown, etc.
 Copy `Configuration/010_smsd-nopasswd` to `/etc/sudoers.d/`
@@ -75,3 +71,16 @@ Uses [Yowsup](https://github.com/tgalal/yowsup)
 pip install yowsup
 # TODO
 ```
+
+## Tweaks and optimizations
+
+### Ramdisk for SMS
+When lots of SMS are processed it can wear out SD cards (I destroyed one after several months).
+A workaround is to store the SMS messages in a ramdisk. The following is an entry in the fstab:
+```
+tmpfs   /var/spool/sms  tmpfs         nodev,nosuid,size=64M     0       0
+```
+To mount it simply call `mount /var/spool/sms`.
+
+The downside is, that when the device restarts/crashed, currently processed SMS messages are lost.
+To work around that there are two scripts for saving&restoring the messages in `Scripts/` and a oneshot-service, which can be enabled to restore the message when the device is starting.
