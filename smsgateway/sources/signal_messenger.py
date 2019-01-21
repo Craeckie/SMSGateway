@@ -28,13 +28,13 @@ def listen():
                     msg = dataMsg['message']
                     app_log.info("From: %s\n\n%s\n" % (source, msg))
                     sink_sms.send(IDENTIFIER, msg, source)
-                elif syncMsg and source == SIGNAL_NUMBER:
+                elif syncMsg and source == SIGNAL_NUMBER and 'message' in syncMsg:
                     msg = syncMsg['message']
                     app_log.info("From: %s\n\n%s\n" % (source, msg))
                     app_log.info("Message from myself: %s" % line)
                     continue
             except KeyError:
-              app_log.warning("KeyError in message \"%s\"" % line_cleaned, exc_info=True)
+              app_log.warning("KeyError in message \"%s\"" % line, exc_info=True)
             # with open ('/var/log/signal.log', 'a') as f:
             #   f.write("%s\n" % line)
             app_log.info("Unknown message: %s" % line)
