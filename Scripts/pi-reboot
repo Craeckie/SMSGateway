@@ -1,0 +1,6 @@
+#!/bin/sh
+rsync -va -delete \
+  --exclude="*.LOCK" \
+  /var/spool/sms/   \
+  /var/spool/sms_bak/
+systemctl reboot

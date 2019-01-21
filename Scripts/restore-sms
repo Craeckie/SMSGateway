@@ -1,0 +1,8 @@
+#!/bin/sh
+/usr/bin/rsync -va --remove-source-files \
+  /var/spool/sms_bak/checked/ \
+  /var/spool/sms/outgoing/
+
+/usr/bin/rsync -va --remove-source-files \
+  /var/spool/sms_bak/ \
+  /var/spool/sms/

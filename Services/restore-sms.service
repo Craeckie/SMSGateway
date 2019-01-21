@@ -1,0 +1,12 @@
+[Unit]
+Description=Restores backed up sms after reboot
+After=network.target
+OnFailure=unit-failed@%n
+#ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/restore-sms
+
+[Install]
+WantedBy=multi-user.target
