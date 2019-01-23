@@ -4,6 +4,7 @@ from smsgateway.config import *
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
 from ..signal_utils import connect
+from .utils import parse_message
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -21,7 +22,7 @@ def init():
 def check(cmd, multiline):
     init()
     # app_log.info("Checking %s" % cmd)
-    if cmd.lower() == 'sg' and multiline:
+    if cmd.upper() == IDENTIFIER and multiline:
       return True
     else:
       return False
@@ -31,30 +32,17 @@ def run(lines):
     init()
 
     app_log.info("Forwarding Signal Message")
-    message = ""
-    messageStarted = False
-    to = None
-    for line in lines[1:]: # skip IDENTIFIER
-        if messageStarted:
-            if message:
-                message += "\n"
-            message += f"{line}"
-        elif not line.strip(): # empty line
-            messageStarted = True
-        else:
-            mTo = re.match("^To: (.*)$", line)
-            if mTo:
-                to = mTo.group(1).strip()
-            else:
-                app_log.warning(f"Unkown header: {line}!")
-    #toL = lines[1]
-    #m = re.match("To:? (.*)$", toL)
-    if to:
-      #to = m.group(1).replace(' ', '')
-      #app_log.info("Matched To: %s" % to)
-      #msg = '\n'.join(lines[2:])
-
-      app_log.info("Sending Signal msg:\n%s" % message)
+    # toL = lines[1]
+    # m = re.match("To:? (.*)$", toL)
+    # if m:
+    #   to = m.group(1).replace(' ', '')
+    #   app_log.info("Matched To: %s" % to)
+    #   msg = '\n'.join(lines[2:])
+    data = parse_message(app_log, lines)
+    if data['success']:
+      msg = data['message']
+      to = data['to']
+      app_log.info(f"Sending Signal msg:\n{msg}")
       try:
           args = [
               SIGNAL_CLI_PATH,
@@ -79,7 +67,7 @@ def run(lines):
       else:
           ret = "Failed to send SG to %s!" % to
     else:
-      ret = "Couldn't match To: %s" % '\n'.join(lines)
+      ret = data['error']
       app_log.info(ret)
     return ret
 

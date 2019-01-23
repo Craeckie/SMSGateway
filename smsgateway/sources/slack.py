@@ -15,7 +15,7 @@ def main():
     init()
 
     sc = SlackClient(SL_TOKEN)
-    
+
     data = sc.api_call("users.list")
     users = {}
     app_log.info("Getting users..")

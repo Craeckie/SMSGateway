@@ -48,21 +48,20 @@ def listen():
                     msg = dataMsg['message']
                     info['from'] = source
                     app_log.info(f"From: {source}\n\n{msg}\n")
-                    sink_sms.send_dict(IDENTIFIER, msg, info)
                 elif syncMsg and source == SIGNAL_NUMBER and 'sentMessage' in syncMsg:
                     sentMsg = syncMsg['sentMessage']
                     info['to'] = source
                     if sentMsg and 'message' in sentMsg and sentMsg['message']:
                         msg = sentMsg['message']
-                        app_log.info("From: %s\n\n%s\n" % (source, msg))
                         app_log.info(f"Message from myself:\n{line}")
-                        continue
+                        app_log.info("From: %s\n\n%s\n" % (source, msg))
                     else:
                         app_log.warning(f"Sent Message contains no message:\n{line}")
                         continue
                 else:
                     app_log.info(f"Has no dataMessage or syncMessage:\n{line})")
                     continue
+                sink_sms.send_dict(IDENTIFIER, msg, info)
             except KeyError:
                 app_log.warning(f"KeyError in message:\n{line}", exc_info=True)
             # with open ('/var/log/signal.log', 'a') as f:

@@ -5,6 +5,7 @@ from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway.sources.utils import *
 from smsgateway import sink_sms
+from .utils import parse_message
 
 from telethon import TelegramClient, utils
 
@@ -90,34 +91,15 @@ async def send_message(message, to_matched):
 def run(lines):
     init()
 
-    app_log.info("Forwarding Telegram Message")
-    messageStarted = False
-    to_matched = None
-    message = ""
-
-    for line in lines[1:]: # skip IDENTIFIER
-        if messageStarted:
-            if message:
-                message += "\n"
-            message += f"{line}"
-        elif not line.strip(): # empty line
-            messageStarted = True
-        else:
-            mTo = re.match("^To: (.*)$", line)
-            if mTo:
-                to_matched = mTo.group(1).strip()
-            else:
-                app_log.warning(f"Unkown header: {line}!")
-
-    if to_matched and message:
-      loop = asyncio.get_event_loop()
-      (success, ret) = loop.run_until_complete(send_message(message, to_matched))
-      if success:
-          ret = None
-      loop.close()
+    data = parse_message(app_log, lines)
+    if data['success']:
+        loop = asyncio.get_event_loop()
+        (success, ret) = loop.run_until_complete(send_message(data['message'], data['to']))
+        if success:
+            ret = None
+        loop.close()
     else:
-      ret = f"Couldn't match To: {to_matched} or message {message}"
-      app_log.error(ret)
+        ret = data['error']
     return ret
 
 
