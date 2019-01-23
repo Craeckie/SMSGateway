@@ -3,17 +3,20 @@ from smsgateway.sources.sms import command_list
 from smsgateway.config import *
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
+from ..signal_utils import connect
 
 import logging
 from logging.handlers import RotatingFileHandler
 
 def init():
-    global app_log, command_regex
+    global IDENTIFIER, app_log, command_regex, session_path
+    IDENTIFIER = "SG"
 
     app_log = setup_logging("signal-send")
 
     command_regex = re.compile('^(?P<command>[a-zA-Z ]+)$')
 
+    session_path = os.path.join(CONFIG_DIR, 'signal-send')
 
 def check(cmd, multiline):
     init()
@@ -53,7 +56,14 @@ def run(lines):
 
       app_log.info("Sending Signal msg:\n%s" % message)
       try:
-          args = [SIGNAL_CLI_PATH, '-u', SIGNAL_NUMBER, 'send', '-m', message, to]
+          args = [
+              SIGNAL_CLI_PATH,
+              '--config', session_path,
+              '-u', SIGNAL_NUMBER,
+              'send',
+              '-m', msg,
+              to,
+          ]
           app_log.info("Calling %s" % str(args))
           res = subprocess.call(args, timeout=30000)
       except subprocess.TimeoutExpired as e:
@@ -78,3 +88,12 @@ command_list.append({
     'check': check,
     'run': run
 })
+
+
+if __name__ == '__main__':
+    init()
+
+    if not connect(app_log, session_path):
+        print("Linking failed!")
+    else:
+        print("Successfully connected!")
