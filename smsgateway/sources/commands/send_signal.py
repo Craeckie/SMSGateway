@@ -63,7 +63,12 @@ def run(lines):
           app_log.error(msg)
           return msg
       if res == 0:
-          ret = "Sent SG to %s!" % to
+          # ret = "Sent SG to %s!" % to
+          ret = '\n'.join([
+              IDENTIFIER,
+              f'To: {to}',
+              '',
+              msg])
       else:
           ret = "Failed to send SG to %s!" % to
     else:
