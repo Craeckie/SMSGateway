@@ -26,7 +26,7 @@ def listen():
             '-u', SIGNAL_NUMBER,
             'receive',
             '--json',
-            '-t', '300',
+            '-t', '-1',
         ],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
