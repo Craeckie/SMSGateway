@@ -29,7 +29,8 @@ def handleCommand(mods, text):
   app_log.info("Commands: %s" % str(mods))
   multiline = len(lines) > 1
   for c in mods:
-      if c.check(cmd, multiline):
+      try:
+        if c.check(cmd, multiline):
           print(f"Mod {c} matched :)")
           try:
               ret = c.run(lines)
@@ -39,6 +40,8 @@ def handleCommand(mods, text):
               app_log.error(msg)
               sink_sms.send_notif(msg)
           break
+      except Exception as e:
+        app_log.warning(f"Could not check {c}:\n{e}")
   # elif len(lines) > 2:
   #   if cmd == "SMS":
   #     print("Forwarding SMS")
@@ -247,8 +250,11 @@ if __name__ == '__main__':
                 if spec not in mod_specs:
                   mod_specs.append(spec)
                   app_log.info("Importing %s" % ext_file[0])
-                  m = importlib.import_module(mod_name)
-                  mods.append(m)
+                  try:
+                      m = importlib.import_module(mod_name)
+                      mods.append(m)
+                  except Exception as e:
+                      app_log.warning(f"Failed importing {mod_name}:\n{e}")
                   # mod_names.add(mod_name)
                   # print(mod_names)
 

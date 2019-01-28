@@ -41,8 +41,9 @@ def listen():
                 source = envelope['source']
                 dataMsg = envelope['dataMessage']
                 syncMsg = envelope['syncMessage']
+                ts = int(envelope['timestamp'])
                 info = {
-                    'date': envelope['timestamp']
+                    'date': str(int(ts / 1000))
                 }
                 if dataMsg:
                     msg = dataMsg['message']
