@@ -34,6 +34,9 @@ def handleCommand(mods, text):
           print(f"Mod {c} matched :)")
           try:
               ret = c.run(lines)
+              if ret:
+                app_log.debug(f"Got message:\n{ret}")
+                break
           except Exception as e:
               trace = traceback.format_exc()
               msg = "Run failed for command %s:\n%s\n%s" % (cmd, e, trace)

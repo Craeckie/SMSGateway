@@ -110,12 +110,16 @@ def get_user_info(entity):
 async def get_entity(client, input_id):
     input_entity = None
     try:
-      input_entity = await client.get_input_entity(input_id) if input_id else None
-    except:
-      pass
+        input_entity = await client.get_input_entity(input_id) if input_id else None
+    except Exception as e:
+        print("Couldn't get input entity: {e}")
+        pass
     entity = await client.get_entity(input_entity) if input_entity else None
     if not entity:
-        entity = await client.get_entity(input_id) if input_id else None
+        try:
+            entity = await client.get_entity(input_id) if input_id else None
+        except Exception as e:
+            print("Couldn't get entity: {e}")
     return entity
 
 #@asyncio.coroutine
