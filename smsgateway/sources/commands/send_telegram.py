@@ -43,7 +43,7 @@ def get_display_name(entity):
     else:
         return None
 
-async def send_message(message, to_matched):
+async def send_message(data):
     app_log.info("Starting client..")
     client = TelegramClient(session_path, api_id, api_hash)
     try:
@@ -53,32 +53,38 @@ async def send_message(message, to_matched):
         app_log.error(ret)
         return (False, ret)
 
-    to = None
-    async with aclosing(client.iter_dialogs()) as agen:
-      async for x in agen:
-          name = get_display_name(x.entity)
-          if not to and name and name == to_matched:
-            to = x.entity.id
-            app_log.info("Found it via display_name: %s" % x.entity.stringify())
-            #break
+    to = name = phone = None
+    if 'phone' in data:
+        phone = to = data['phone']
+        #TODO: use get_entity from telegram_utils. Try next method, if fails
+    else:
+        async with aclosing(client.iter_dialogs()) as agen:
+          async for x in agen:
+              name = get_display_name(x.entity)
+              if name and name == data['to']:
+                to = x.entity.id
+                app_log.info("Found it via display_name: %s" % x.entity.stringify())
+                break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
-        to = name = to_matched
+        to = name = data['to']
 
-    app_log.info("Sending Telegram msg:\n%s" % message)
+    app_log.info("Sending Telegram msg:\n%s" % data['message'])
 
-    try:
-        import getpass
-        app_log.info("I am: %s" % getpass.getuser())
-    except:
-        pass
+    # try:
+    #     import getpass
+    #     app_log.info("I am: %s" % getpass.getuser())
+    # except:
+    #     pass
 
-    await client.send_message(to, message)
+    await client.send_message(to, data['message'])
+
     await client.disconnect()
-    msg = format_sms(IDENTIFIER, message, {
-      'to': name,
-      'status': 'Processed'
-    })
+    sendData = {'status': 'Processed'}
+    sendData['to'] = name if name else phone
+    if phone:
+        sendData['phone'] = phone
+    msg = format_sms(IDENTIFIER, data['message'], sendData)
     app_log.info(msg)
     # ret = '\n'.join([
     #   IDENTIFIER,
@@ -94,7 +100,7 @@ def run(lines):
     data = parse_message(app_log, lines)
     if data['success']:
         loop = asyncio.get_event_loop()
-        (success, ret) = loop.run_until_complete(send_message(data['message'], data['to']))
+        (success, ret) = loop.run_until_complete(send_message(data))
         if success:
             ret = None
         loop.close()
