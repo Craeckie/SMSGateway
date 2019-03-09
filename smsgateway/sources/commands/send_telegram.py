@@ -1,21 +1,15 @@
-import asyncio, re, json
+import asyncio
+
 from async_generator import aclosing
+from telethon import TelegramClient
+from telethon.tl.types import Chat, User, Channel
 
 from smsgateway.sources.sms import command_list
-from smsgateway.config import *
 from smsgateway.sources.utils import *
-from smsgateway import sink_sms
 from .utils import parse_message
 
-from telethon import TelegramClient, utils
 
-from telethon.tl.types import Chat, User, Channel, \
-  PeerUser, PeerChat, PeerChannel, \
-  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
-  MessageMediaDocument, MessageMediaWebPage, \
-  Document, DocumentAttributeFilename, DocumentAttributeSticker
-
-def init():    
+def init():
     global app_log, IDENTIFIER, command_regex, api_id, api_hash, session_path
     app_log = setup_logging("telegram-send")
     IDENTIFIER = "TG"
@@ -26,13 +20,15 @@ def init():
 
     session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
+
 def check(cmd, multiline):
     init()
     # print("Checking %s" % cmd)
     if cmd.lower() == IDENTIFIER.lower() and multiline:
-      return True
+        return True
     else:
-      return False
+        return False
+
 
 def get_display_name(entity):
     app_log.debug("Looking up entity " + entity.stringify())
@@ -42,6 +38,7 @@ def get_display_name(entity):
         return entity.title
     else:
         return None
+
 
 async def send_message(data):
     app_log.info("Starting client..")
@@ -56,15 +53,17 @@ async def send_message(data):
     to = name = phone = None
     if 'phone' in data:
         phone = to = data['phone']
-        #TODO: use get_entity from telegram_utils. Try next method, if fails
+        # TODO: use get_entity from telegram_utils. Try next method, if fails
     else:
         async with aclosing(client.iter_dialogs()) as agen:
-          async for x in agen:
-              name = get_display_name(x.entity)
-              if name and name == data['to']:
-                to = x.entity.id
-                app_log.info("Found it via display_name: %s" % x.entity.stringify())
-                break
+            async for x in agen:
+                name = get_display_name(x.entity)
+                if name and name == data['to'] and not to:
+                    to = x.entity.id
+                    app_log.info("Found it via display_name: %s" % x.entity.stringify())
+                    # TODO: fix bug:
+                    # '_DialogsIter' object has no attribute 'aclose'
+                    # break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = data['to']
@@ -80,8 +79,7 @@ async def send_message(data):
     await client.send_message(to, data['message'])
 
     await client.disconnect()
-    sendData = {'status': 'Processed'}
-    sendData['to'] = name if name else phone
+    sendData = {'status': 'Processed', 'to': name if name else phone}
     if phone:
         sendData['phone'] = phone
     msg = format_sms(IDENTIFIER, data['message'], sendData)
@@ -93,6 +91,7 @@ async def send_message(data):
     #   message
     # ])
     return (True, msg)
+
 
 def run(lines):
     init()
@@ -109,15 +108,21 @@ def run(lines):
     return ret
 
 
-if __name__ == '__main__':
-    init()
+def authorize():
     client = TelegramClient(session_path, api_id, api_hash)
     if not client.start():
-        app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.sources.commands.send_telegram!")
+        app_log.error(
+            "Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m "
+            "smsgateway.sources.commands.send_telegram!")
         sys.exit(1)
 
+
+if __name__ == '__main__':
+    init()
+    authorize()
+
 command_list.append({
-    'name' : 'TG-Forwarder',
+    'name': 'TG-Forwarder',
     'check': check,
     'run': run
 })
