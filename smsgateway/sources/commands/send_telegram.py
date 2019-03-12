@@ -1,6 +1,5 @@
 import asyncio
 
-from async_generator import aclosing
 from telethon import TelegramClient
 from telethon.tl.types import Chat, User, Channel
 
@@ -55,15 +54,12 @@ async def send_message(data):
         phone = to = data['phone']
         # TODO: use get_entity from telegram_utils. Try next method, if fails
     else:
-        async with aclosing(client.iter_dialogs()) as agen:
-            async for x in agen:
-                name = get_display_name(x.entity)
-                if name and name == data['to'] and not to:
-                    to = x.entity.id
-                    app_log.info("Found it via display_name: %s" % x.entity.stringify())
-                    # TODO: fix bug:
-                    # '_DialogsIter' object has no attribute 'aclose'
-                    # break
+        async for x in client.iter_dialogs():
+            name = get_display_name(x.entity)
+            if name and name == data['to'] and not to:
+                to = x.entity.id
+                app_log.info("Found it via display_name: %s" % x.entity.stringify())
+                break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = data['to']

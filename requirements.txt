@@ -1,6 +1,4 @@
 appdirs~=1.4.3
-async-generator~=1.10
-asyncio~=3.4.3
 beautifulsoup4~=4.7.1
 cryptography~=2.5
 fbchat~=1.4.2
