@@ -113,6 +113,14 @@ async def callback(event):
     except Exception as e:
         app_log.warning("Could not save session:\n" + e)
 
+
+@client.on(events.MessageRead())
+async def callback_read(event):
+    sink_sms.send_dict(IDENTIFIER, None, {
+        'ID': event.max_id,
+        'Status': 'read'
+    })
+
 @client.on(events.MessageDeleted())
 async def callback_delete(event):
     ids = event.deleted_ids
