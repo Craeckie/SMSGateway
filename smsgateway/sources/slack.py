@@ -1,3 +1,4 @@
+import json
 import time, asyncio
 from smsgateway import sink_sms
 from smsgateway.config import *
@@ -25,7 +26,12 @@ def main():
         return
     for u in data['members']:
         uID = u['id']
-        uName = u['real_name']
+        if 'real_name' in u:
+            uName = u['real_name']
+        else:
+            app_log.warning(f'Could not get real_name of {uID}:')
+            app_log.warning(json.dumps(u, indent=2))
+            continue
         app_log.debug(f"{uID}: {uName}")
         users[uID] = uName
     app_log.info(f"Got {len(users)} users")
