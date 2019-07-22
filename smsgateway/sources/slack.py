@@ -26,9 +26,15 @@ def main():
         return
     for u in data['members']:
         uID = u['id']
+        uName = None
         if 'real_name' in u:
             uName = u['real_name']
         else:
+            if 'profile' in u:
+                p = u['profile']
+                if 'real_name' in p:
+                    uName = u['real_name']
+        if not uName:
             app_log.warning(f'Could not get real_name of {uID}:')
             app_log.warning(json.dumps(u, indent=2))
             continue
