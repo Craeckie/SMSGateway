@@ -28,15 +28,32 @@ def run(lines):
     init()
 
     app_log.info("Forwarding Signal Message")
-    toL = lines[1]
-    m = re.match("To:? (.*)$", toL)
-    if m:
-      to = m.group(1).replace(' ', '')
-      app_log.info("Matched To: %s" % to)
-      msg = '\n'.join(lines[2:])
-      app_log.info("Sending Signal msg:\n%s" % msg)
+    message = ""
+    messageStarted = False
+    to = None
+    for line in lines[1:]: # skip IDENTIFIER
+        if messageStarted:
+            if message:
+                message += "\n"
+            message += f"{line}"
+        elif not line.strip(): # empty line
+            messageStarted = True
+        else:
+            mTo = re.match("^To: (.*)$", line)
+            if mTo:
+                to = mTo.group(1).strip()
+            else:
+                app_log.warning(f"Unkown header: {line}!")
+    #toL = lines[1]
+    #m = re.match("To:? (.*)$", toL)
+    if to:
+      #to = m.group(1).replace(' ', '')
+      #app_log.info("Matched To: %s" % to)
+      #msg = '\n'.join(lines[2:])
+
+      app_log.info("Sending Signal msg:\n%s" % message)
       try:
-          args = [SIGNAL_CLI_PATH, '-u', SIGNAL_NUMBER, 'send', '-m', msg, to]
+          args = [SIGNAL_CLI_PATH, '-u', SIGNAL_NUMBER, 'send', '-m', message, to]
           app_log.info("Calling %s" % str(args))
           res = subprocess.call(args, timeout=30000)
       except subprocess.TimeoutExpired as e:
@@ -52,7 +69,7 @@ def run(lines):
       else:
           ret = "Failed to send SG to %s!" % to
     else:
-      ret = "Couldn't match To: %s" % toL
+      ret = "Couldn't match To: %s" % '\n'.join(lines)
       app_log.info(ret)
     return ret
 

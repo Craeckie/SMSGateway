@@ -13,5 +13,8 @@ if not os.path.exists(_config_file):
     print("Error: no config file at %s!" % _config_file)
     sys.exit(1)
 
+
+Messengers = []
+
 sys.path.append(CONFIG_DIR)
 from config import *

@@ -56,10 +56,10 @@ async def send_message(message, to_matched):
     async with aclosing(client.iter_dialogs()) as agen:
       async for x in agen:
           name = get_display_name(x.entity)
-          if name and name == to_matched:
+          if not to and name and name == to_matched:
             to = x.entity.id
             app_log.info("Found it via display_name: %s" % x.entity.stringify())
-            break
+            #break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
@@ -97,7 +97,9 @@ def run(lines):
 
     for line in lines[1:]: # skip IDENTIFIER
         if messageStarted:
-            message += f"\n{line}"
+            if message:
+                message += "\n"
+            message += f"{line}"
         elif not line.strip(): # empty line
             messageStarted = True
         else:

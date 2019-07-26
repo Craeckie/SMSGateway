@@ -33,7 +33,7 @@ def main():
             if 'profile' in u:
                 p = u['profile']
                 if 'real_name' in p:
-                    uName = u['real_name']
+                    uName = p['real_name']
         if not uName:
             app_log.warning(f'Could not get real_name of {uID}:')
             app_log.warning(json.dumps(u, indent=2))
