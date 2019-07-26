@@ -1,14 +1,14 @@
 import logging
 
 # General Settings
-CONTROL_PHONES = ['4912312312312',]
+CONTROL_PHONES = ['4912312312312', ]
 
 LOG_DIR = '/var/log/smsgateway/'
 LOG_STD_LEVEL = logging.DEBUG
 
 SMS_DIR = '/var/spool/sms/outgoing/'
 
-SYSTEMCTL_PATH = '/bin/systemctl' # Use 'which systemctl' to find out
+SYSTEMCTL_PATH = '/bin/systemctl'  # Use 'which systemctl' to find out
 REBOOT_PATH = '/sbin/reboot'
 # When using a ramdisk you can use the script instead (see README):
 REBOOT_PATH = '/usr/local/bin/pi-reboot'
@@ -19,37 +19,42 @@ SUDO_PATH = '/usr/bin/sudo'
 # Generate with python -c 'from cryptography.fernet import Fernet as f; print(f.generate_key())'
 KEY = "xyz="
 
-# Signal
-SIGNAL_NUMBER = '+4912312312312'
-SIGNAL_CLI_PATH = '/usr/local/bin/signal-cli'
-
-# Facebook
-FB_COOKIE_PATH = '/home/smsd/facebook-session.txt'
-FB_CREDENTIALS = ('me@example.com', 'mysecretpassword')
-
-# Slack
-SL_TOKEN = 'xxxx'
-
-# E-Mail
-EMAIL_ACCOUNTS = {
-    'example_name': {
-      'Host': 'imap.example.com',
-      'User': 'somebody@example.com',
-      'Password': 'mysecretpassword'
+Messengers = [
+    {  # Signal
+        'Type': 'SG',
+        'Number': '+4912312312312',
+        'CLI_Path': '/usr/local/bin/signal-cli',
+    },
+    {  # Facebook
+        'Type': 'FB',
+        'Cookie_Path': '/home/smsd/facebook-session.txt',
+        'Username': 'me@example.com',
+        'Password': 'mysecretpassword',
+    },
+    {  # Slack
+        'Type': 'SL',
+        'Identifier': 'SL1',
+        'Token': 'xxxx',
+    },
+    {  # E-Mail
+        'Type': 'EM',
+        'Host': 'imap.example.com',
+        'User': 'somebody@example.com',
+        'Password': 'mysecretpassword',
+    },
+    {  # WhatsApp
+        'Type': 'WA',
+        'Number': '4912312312312',
+        'User_Aliases': {
+            '4912312312312': 'Friend 1',
+            '4912312312313': 'Friend 2'
+        },
+        'Group_Aliases': {
+            '123123123': 'Group 1',
+            '123123123123': 'Group 2'
+        },
     }
-}
-
-# WhatsApp
-WA_NUMBER = '4912312312312'
-WA_USER_ALIASES = {
-    '4912312312312' : 'Friend 1',
-    '4912312312313' : 'Friend 2',
-    }
-
-WA_GROUP_ALIASES = {
-    '123123123' : 'Group 1',
-    '123123123123' : 'Group 2',
-    }
+]
 
 # Command settings
 SERVICES = ['dhcpcd',

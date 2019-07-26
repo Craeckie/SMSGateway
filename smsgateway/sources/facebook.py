@@ -67,3 +67,4 @@ if __name__ == '__main__':
     client = login(FB_CREDENTIALS, FB_COOKIE_PATH, EchoBot)
     users = client.fetchAllUsers()
     client.listen()
+
