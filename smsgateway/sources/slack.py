@@ -72,15 +72,16 @@ def main():
                     text = None
                     if 'message' in entry:
                         msg = entry['message']
-                        isInChannel = True
+                        #isInChannel = True
                         app_log.info("Got a message in a channel!")
                     elif 'text' in entry:
                         msg = entry
-                        isInChannel = False
+                        #isInChannel = False
                         app_log.info("Got a message from a user/bot!")
                     else:
                         app_log.warning("Could not parse this:\n" + entry)
                         continue
+
                     if not msg['text']:
                         print("Has no message!")
                         continue
@@ -93,12 +94,16 @@ def main():
                         }
                         if 'client_msg_id' in msg:
                             chat_info['ID'] = msg['client_msg_id']
-                        if isInChannel:
-                            channel = channels[entry['channel']]
-                            chat_info.update({
-                              'type': 'Group',
-                              'to': channel,
-                            })
+                        #if isInChannel:
+                        if 'channel' in entry:
+                            c = entry['channel']
+                            if c and c in channels:
+                              chat_info.update({
+                                'type': 'Group',
+                                'to': channels[c],
+                              })
+                            elif c:
+                              app_log.warning(f"Couldn't find channel {c}!")
                         sink_sms.send_dict(IDENTIFIER, text, chat_info)
 
         time.sleep(1)
