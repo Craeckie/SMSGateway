@@ -53,13 +53,12 @@ async def send_message(message, to_matched):
         return (False, ret)
 
     to = None
-    async with aclosing(client.iter_dialogs()) as agen:
-      async for x in agen:
-          name = get_display_name(x.entity)
-          if not to and name and name == to_matched:
-            to = x.entity.id
-            app_log.info("Found it via display_name: %s" % x.entity.stringify())
-            #break
+    async for x in client.iter_dialogs():
+      name = get_display_name(x.entity)
+      if not to and name and name == to_matched:
+        to = x.entity.id
+        app_log.info("Found it via display_name: %s" % x.entity.stringify())
+        break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
