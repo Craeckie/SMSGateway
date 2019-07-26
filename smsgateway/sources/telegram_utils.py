@@ -186,27 +186,27 @@ async def parseReplyTo(client, app_log, event):
     chat_id = await get_chat_id(client, event.message.out, event.message.from_id, event.message.to_id)
     if chat_id:
       reply_info = None
-      async with aclosing(client.iter_messages(chat_id)) as agen:
-        async for m in agen:
-            if m.id == event.message.reply_to_msg_id:
-                name = None
-                if m.from_id:
-                  print(f"from: {m.from_id}")
-                if m.to_id:
-                  print(f"to: {m.to_id}")
-                if m.out:
-                    reply_info = await get_incoming_info(client, app_log, m.from_id, m.to_id)
-                    if 'from' in reply_info:
-                      name = reply_info['from']
-                if not m.out or not name:
-                    reply_info = await get_outgoing_info(client, app_log, m.from_id)
-                    if 'to' in reply_info:
-                      name = reply_info['to']
-                if not name:
-                    name = "N/A"
-                msg += f"Reply to {name}:\n"
-                msg += '\n'.join(["> " + line for line in m.message.split('\n')])
-                break
+      #async with aclosing(client.iter_messages(chat_id)) as agen:
+      async for m in client.iter_messages(chat_id):
+        if m.id == event.message.reply_to_msg_id:
+            name = None
+            if m.from_id:
+              print(f"from: {m.from_id}")
+            if m.to_id:
+              print(f"to: {m.to_id}")
+            if m.out:
+                reply_info = await get_incoming_info(client, app_log, m.from_id, m.to_id)
+                if 'from' in reply_info:
+                  name = reply_info['from']
+            if not m.out or not name:
+                reply_info = await get_outgoing_info(client, app_log, m.from_id)
+                if 'to' in reply_info:
+                  name = reply_info['to']
+            if not name:
+                name = "N/A"
+            msg += f"Reply to {name}:\n"
+            msg += '\n'.join(["> " + line for line in m.message.split('\n')])
+            break
       if not reply_info:
           app_log.warning(f"No message found for reply_to_msg_id {event.message.reply_to_msg_id} in chat {chat_id}!")
           msg += f"Reply to unknown message"
