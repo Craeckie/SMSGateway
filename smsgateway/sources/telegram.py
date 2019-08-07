@@ -63,6 +63,9 @@ async def callback(event):
               user_info['name'] = entity.title
           if 'name' in user_info:
               msg += f"Forwarded from {user_info['name']}:\n"
+              chat_info.update({
+                  'fwd': json.dumps(user_info)
+              })
 
       if event.message.reply_to_msg_id:
           try:

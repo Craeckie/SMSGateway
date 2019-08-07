@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='SMSGateway',
-    version='0.5.2.13dev0',
+    version='0.5.3.1dev2',
     url="https://github.com/Craeckie/SMSGateway",
     description="Forwards messages via SMS from and to instant messengers",
     packages=setuptools.find_packages(),
