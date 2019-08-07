@@ -9,12 +9,13 @@ from smsgateway import sink_sms
 from telethon import TelegramClient, utils
 
 from telethon.tl.types import Chat, User, Channel, \
-  PeerUser, PeerChat, PeerChannel, \
-  MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
-  MessageMediaDocument, MessageMediaWebPage, \
-  Document, DocumentAttributeFilename, DocumentAttributeSticker
+    PeerUser, PeerChat, PeerChannel, \
+    MessageMediaGeo, MessageMediaContact, MessageMediaPhoto, \
+    MessageMediaDocument, MessageMediaWebPage, \
+    Document, DocumentAttributeFilename, DocumentAttributeSticker
 
-def init():    
+
+def init():
     global app_log, IDENTIFIER, command_regex, api_id, api_hash, session_path
     app_log = setup_logging("telegram-send")
     IDENTIFIER = "TG"
@@ -25,13 +26,15 @@ def init():
 
     session_path = os.path.join(CONFIG_DIR, 'telegram-send')
 
+
 def check(cmd, multiline):
     init()
     # print("Checking %s" % cmd)
     if cmd.lower() == IDENTIFIER.lower() and multiline:
-      return True
+        return True
     else:
-      return False
+        return False
+
 
 def get_display_name(entity):
     # app_log.debug("Looking up entity " + entity.stringify())
@@ -41,6 +44,7 @@ def get_display_name(entity):
         return entity.title
     else:
         return None
+
 
 async def send_message(message, to_matched):
     app_log.info("Starting client..")
@@ -54,11 +58,11 @@ async def send_message(message, to_matched):
 
     to = None
     async for x in client.iter_dialogs():
-      name = get_display_name(x.entity)
-      if not to and name and name == to_matched:
-        to = x.entity.id
-        app_log.info("Found it via display_name: %s" % x.entity.stringify())
-        break
+        name = get_display_name(x.entity)
+        if not to and name and name == to_matched:
+            to = x.entity.id
+            app_log.info("Found it via display_name: %s" % x.entity.stringify())
+            break
     if not to:
         app_log.warning(f"Couldn't find {to}! Trying directly..")
         to = name = to_matched
@@ -74,8 +78,8 @@ async def send_message(message, to_matched):
     await client.send_message(to, message)
     await client.disconnect()
     msg = format_sms(IDENTIFIER, message, {
-      'to': name,
-      'status': 'Processed'
+        'to': name,
+        'status': 'Processed'
     })
     app_log.info(msg)
     # ret = '\n'.join([
@@ -86,6 +90,7 @@ async def send_message(message, to_matched):
     # ])
     return (True, msg)
 
+
 def run(lines):
     init()
 
@@ -94,12 +99,12 @@ def run(lines):
     to_matched = None
     message = ""
 
-    for line in lines[1:]: # skip IDENTIFIER
+    for line in lines[1:]:  # skip IDENTIFIER
         if messageStarted:
             if message:
                 message += "\n"
             message += f"{line}"
-        elif not line.strip(): # empty line
+        elif not line.strip():  # empty line
             messageStarted = True
         else:
             mTo = re.match("^To: (.*)$", line)
@@ -109,14 +114,14 @@ def run(lines):
                 app_log.warning(f"Unkown header: {line}!")
 
     if to_matched and message:
-      loop = asyncio.get_event_loop()
-      (success, ret) = loop.run_until_complete(send_message(message, to_matched))
-      if success:
-          ret = None
-      loop.close()
+        loop = asyncio.get_event_loop()
+        (success, ret) = loop.run_until_complete(send_message(message, to_matched))
+        if success:
+            ret = None
+        loop.close()
     else:
-      ret = f"Couldn't match To: {to_matched} or message {message}"
-      app_log.error(ret)
+        ret = f"Couldn't match To: {to_matched} or message {message}"
+        app_log.error(ret)
     return ret
 
 
@@ -124,11 +129,12 @@ if __name__ == '__main__':
     init()
     client = TelegramClient(session_path, api_id, api_hash)
     if not client.start():
-        app_log.error("Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.sources.commands.send_telegram!")
+        app_log.error(
+            "Could not connect to Telegram!\nIf you haven't authorized this client, run python3 -m smsgateway.sources.commands.send_telegram!")
         sys.exit(1)
 
 command_list.append({
-    'name' : 'TG-Forwarder',
+    'name': 'TG-Forwarder',
     'check': check,
     'run': run
 })
