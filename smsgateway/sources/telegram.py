@@ -54,7 +54,8 @@ async def callback(event):
           user_info = {}
           if fwd_from.from_id:
               entity = await client.get_entity(fwd_from.from_id)
-              (name, phone) = get_user_info(entity)
+              (user_id, name, phone) = get_user_info(entity)
+              user_info['user_id'] = user_id
               if name:
                   user_info['name'] = name
           elif fwd_from.channel_id:
