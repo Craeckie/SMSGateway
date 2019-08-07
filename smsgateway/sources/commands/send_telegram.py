@@ -34,7 +34,7 @@ def check(cmd, multiline):
       return False
 
 def get_display_name(entity):
-    app_log.debug("Looking up entity " + entity.stringify())
+    # app_log.debug("Looking up entity " + entity.stringify())
     if isinstance(entity, User):
         return ' '.join([x for x in [entity.first_name, entity.last_name] if x])
     elif isinstance(entity, Chat) or isinstance(entity, Channel):
