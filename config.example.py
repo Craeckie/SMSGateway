@@ -11,7 +11,7 @@ SMS_DIR = '/var/spool/sms/outgoing/'
 SYSTEMCTL_PATH = '/bin/systemctl' # Use 'which systemctl' to find out
 REBOOT_PATH = '/sbin/reboot'
 # When using a ramdisk you can use the script instead (see README):
-REBOOT_PATH = '/usr/local/bin/pi-reboot'
+# REBOOT_PATH = '/usr/local/bin/pi-reboot'
 APT_PATH = '/usr/bin/apt'
 SUDO_PATH = '/usr/bin/sudo'
 
