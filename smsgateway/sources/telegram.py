@@ -120,10 +120,20 @@ async def callback(event):
 
 @client.on(events.MessageRead())
 async def callback_read(event):
-    sink_sms.send_dict(IDENTIFIER, None, {
+    app_log.debug(event)
+    chat_info = {
         'ID': event.max_id,
         'Status': 'read'
-    })
+    }
+    if 'original_update' in event:
+        if event.outbox:
+            chat_info.update(await get_outgoing_info(client, app_log, event.original_update.peer))
+        else:
+            chat_info.update(await get_incoming_info(client, app_log, event.original_update.peer))
+        app_log.info(chat_info)
+        sink_sms.send_dict(IDENTIFIER, None, chat_info)
+    else:
+        app_log.warning("MessageRead-Event has no 'original_update'!:\n" + event.stringify())
 
 @client.on(events.MessageDeleted())
 async def callback_delete(event):
