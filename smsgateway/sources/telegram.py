@@ -126,12 +126,19 @@ async def callback_read(event):
         'Status': 'read'
     }
     if 'original_update' in event:
-        if event.outbox:
-            chat_info.update(await get_outgoing_info(client, app_log, event.original_update.peer))
-        else:
-            chat_info.update(await get_incoming_info(client, app_log, event.original_update.peer))
-        app_log.info(chat_info)
-        sink_sms.send_dict(IDENTIFIER, None, chat_info)
+        try:
+            if event.outbox:
+                chat_info.update(await get_outgoing_info(client, app_log, event.original_update.peer))
+            else:
+                chat_info.update(await get_incoming_info(client, app_log, event.original_update.peer))
+            app_log.info(chat_info)
+            sink_sms.send_dict(IDENTIFIER, None, chat_info)
+        except Exception as e:
+            event = event.stringify()
+            trace = traceback.format_exc()
+            app_log.warning(event, exc_info=True)
+            app_log.warning(str(chat_info))
+            sink_sms.send_notif("Telegram read-message parsing failed!\n%s" % '\n'.join([event, trace, str(chat_info)]))
     else:
         app_log.warning("MessageRead-Event has no 'original_update'!:\n" + event.stringify())
 
