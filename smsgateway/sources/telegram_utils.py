@@ -1,6 +1,5 @@
 import asyncio, json
 from datetime import datetime, timedelta
-from async_generator import aclosing
 from telethon.tl.types import Chat, User, Channel, \
     PeerUser, PeerChat, PeerChannel, \
     MessageMediaGeo, MessageMediaGeoLive, MessageMediaContact, MessageMediaPhoto, \
@@ -10,6 +9,7 @@ from telethon.tl.types import Chat, User, Channel, \
 
 from smsgateway.sources.utils import *
 
+app_log = setup_logging("telegram")
 
 def parseMedia(media):
     msg = ""
@@ -80,6 +80,7 @@ def parseMedia(media):
     elif isinstance(media, MessageMediaWebPage):
         msg += "Media: Webpage"
         webpage = media.webpage
+        app_log.debug(webpage)
         items = ['site_name', 'title', 'description']
         if isinstance(webpage, MessageMediaWebPage):  # all(item in webpage for item in items):
             msg += "\n" + '\n'.join("> " + [webpage[item] for item in items])
@@ -201,7 +202,6 @@ async def parseReplyTo(client, app_log, event):
     chat_id = await get_chat_id(client, event.message.out, event.message.from_id, event.message.to_id)
     if chat_id:
         reply_info = None
-        # async with aclosing(client.iter_messages(chat_id)) as agen:
         async for m in client.iter_messages(chat_id):
             if m.id == event.message.reply_to_msg_id:
                 name = None
