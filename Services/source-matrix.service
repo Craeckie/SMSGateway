@@ -1,0 +1,17 @@
+[Unit]
+Description=Listens and forwards Telegram Messages
+After=network-online.target
+OnFailure=unit-failed@%n
+#ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -m smsgateway.sources.matrix
+User=smsd
+Restart=always
+RestartSec=20
+StartLimitInterval=300
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

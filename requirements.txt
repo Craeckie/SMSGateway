@@ -6,3 +6,4 @@ fbchat~=1.9.7
 imapclient~=2.1.0
 slackclient~=2.8.1
 telethon~=1.16.4
+matrix-nio[e2e]~=0.15.1
