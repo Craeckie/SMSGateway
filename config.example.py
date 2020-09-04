@@ -19,6 +19,15 @@ SUDO_PATH = '/usr/bin/sudo'
 # Generate with python -c 'from cryptography.fernet import Fernet as f; print(f.generate_key())'
 KEY = "xyz="
 
+# Matrix
+MATRIX_CREDENTIALS = ('@me:matrix.org', 'mysecretpassword')
+MATRIX_HS_URL = "https://matrix.org"
+
+# Telegram
+TELEGRAM_CLI_PATH = '/home/smsd/tg/bin/telegram-cli'
+TELEGRAM_KEY_PATH = '/home/smsd/tg/tg-server.pub'
+TG_USER_ID = 164387030
+
 # Signal
 SIGNAL_NUMBER = '+4912312312312'
 SIGNAL_CLI_PATH = '/usr/local/bin/signal-cli'
