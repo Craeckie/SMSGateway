@@ -2,7 +2,7 @@ import asyncio, json, os, sys, getpass
 import time
 from datetime import datetime
 
-from nio import AsyncClient, LoginResponse
+from nio import AsyncClient, LoginResponse, ClientConfig
 
 from smsgateway import sink_sms
 from smsgateway.sources.utils import *
@@ -60,6 +60,7 @@ async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
 async def main() -> None:
     global MATRIX_HS_URL, User
     client = None
+    client_config = ClientConfig(store_sync_tokens=True)
     # If there are no previously-saved credentials, we'll use the password
     if not os.path.exists(CONFIG_FILE):
         print("First time use. Did not find credential file. Asking for "
@@ -69,7 +70,7 @@ async def main() -> None:
             MATRIX_HS_URL = "https://" + MATRIX_HS_URL
 
         User, Pass = MATRIX_CREDENTIALS
-        client = AsyncClient(MATRIX_HS_URL, User)
+        client = AsyncClient(MATRIX_HS_URL, User, config=client_config)
 
         device_name = "SMSGateway"
 
@@ -87,7 +88,7 @@ async def main() -> None:
         # open the file in read-only mode
         with open(CONFIG_FILE, "r") as f:
             config = json.load(f)
-            client = AsyncClient(config['homeserver'])
+            client = AsyncClient(config['homeserver'], config=client_config)
 
             client.access_token = config['access_token']
             client.user_id = config['user_id']
@@ -107,7 +108,8 @@ async def main() -> None:
             "body": "Hello world!"
         }
     )
-    await client.sync_forever()
+
+    await client.sync_forever(full_state=True)
 
 def write_details_to_disk(resp: LoginResponse, homeserver) -> None:
     """Writes the required login details to disk so we can log in later without
