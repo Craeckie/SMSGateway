@@ -1,5 +1,4 @@
 import asyncio, re, json
-from async_generator import aclosing
 
 from smsgateway.sources.sms import command_list
 from smsgateway.config import *
