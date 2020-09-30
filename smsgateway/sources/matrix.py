@@ -12,6 +12,7 @@ from nio import AsyncClient, MatrixRoom, RoomMessageText
 
 CONFIG_DIR = user_config_dir(appname="smsgateway", appauthor="craeckie")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "matrix-token.json")
+STORE_DIR = os.path.join(CONFIG_DIR, 'matrix-store')
 
 IDENTIFIER = "MX"
 User = None
@@ -59,6 +60,9 @@ async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
 
 async def main() -> None:
     global MATRIX_HS_URL, User
+    if STORE_DIR and not os.path.isdir(STORE_DIR):
+        os.mkdir(STORE_DIR)
+
     client = None
     client_config = ClientConfig(store_sync_tokens=True)
     # If there are no previously-saved credentials, we'll use the password
@@ -70,14 +74,14 @@ async def main() -> None:
             MATRIX_HS_URL = "https://" + MATRIX_HS_URL
 
         User, Pass = MATRIX_CREDENTIALS
-        client = AsyncClient(MATRIX_HS_URL, User, config=client_config)
+        client = AsyncClient(MATRIX_HS_URL, User, config=client_config, store_path=STORE_DIR)
 
         device_name = "SMSGateway"
 
         resp = await client.login(Pass, device_name=device_name)
 
         if (isinstance(resp, LoginResponse)):
-            write_details_to_disk(resp, MATRIX_HS_URL)
+            write_details_to_disk(resp, MATRIX_HS_URL, STORE_DIR)
         else:
             print(f"homeserver = \"{MATRIX_HS_URL}\"; user = \"{User}\"")
             print(f"Failed to log in: {resp}")
@@ -88,7 +92,7 @@ async def main() -> None:
         # open the file in read-only mode
         with open(CONFIG_FILE, "r") as f:
             config = json.load(f)
-            client = AsyncClient(config['homeserver'], config=client_config)
+            client = AsyncClient(config['homeserver'], config=client_config, store_path=config['store_path'])
 
             client.access_token = config['access_token']
             client.user_id = config['user_id']
@@ -111,7 +115,7 @@ async def main() -> None:
 
     await client.sync_forever(full_state=True)
 
-def write_details_to_disk(resp: LoginResponse, homeserver) -> None:
+def write_details_to_disk(resp: LoginResponse, homeserver, store_path) -> None:
     """Writes the required login details to disk so we can log in later without
     using a password.
 
@@ -127,7 +131,8 @@ def write_details_to_disk(resp: LoginResponse, homeserver) -> None:
                 "homeserver": homeserver,  # e.g. "https://matrix.example.org"
                 "user_id": resp.user_id,  # e.g. "@user:example.org"
                 "device_id": resp.device_id,  # device ID, 10 uppercase letters
-                "access_token": resp.access_token  # cryptogr. access token
+                "access_token": resp.access_token,  # cryptogr. access token
+                "store_path": store_path  # directory to store keys
             },
             f
         )
