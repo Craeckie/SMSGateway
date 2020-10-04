@@ -17,14 +17,14 @@ STORE_DIR = os.path.join(CONFIG_DIR, 'matrix-store')
 IDENTIFIER = "MX"
 User = None
 
+app_log = setup_logging("matrix")
+
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
-    print(
+    app_log.info(
         f"Message received in room {room.display_name}\n"
         f"{room.user_name(event.sender)} | {event.body}"
     )
     is_group = len(room.users.keys()) > 2 or room.is_named
-    if 'Löwenherz' in room.display_name:
-        print("Löwenherz!")
 
     if is_group and not room.is_named:
         room_name = ', '.join([user.display_name for id, user in room.users.items() if id != room.own_user_id])
@@ -75,7 +75,7 @@ async def main() -> None:
     client_config = ClientConfig(store_sync_tokens=True)
     # If there are no previously-saved credentials, we'll use the password
     if not os.path.exists(CONFIG_FILE):
-        print("First time use. Did not find credential file. Using supplied "
+        app_log.info("First time use. Did not find credential file. Using supplied "
               "homeserver, user, and password to create credential file.")
         if not (MATRIX_HS_URL.startswith("https://")
                 or MATRIX_HS_URL.startswith("http://")):
