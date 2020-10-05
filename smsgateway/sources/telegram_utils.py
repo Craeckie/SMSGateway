@@ -11,6 +11,7 @@ from smsgateway.sources.utils import *
 
 app_log = setup_logging("telegram")
 
+
 def parseMedia(media):
     msg = ""
 

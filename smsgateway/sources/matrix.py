@@ -19,6 +19,7 @@ User = None
 
 app_log = setup_logging("matrix")
 
+
 async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
     app_log.info(
         f"Message received in room {room.display_name}\n"
@@ -43,8 +44,7 @@ async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
                 'to': room_name
             })
         else:
-            to_id = list(filter(lambda u: u != User, room.users))[0]
-            to_user = room.users[to_id]
+            to_user = [user for u_id, user in room.users.items() if u_id != event.sender][0]
             chat_info.update({
                 'to_id': to_user.user_id,
                 'to': to_user.display_name
