@@ -12,7 +12,7 @@ from smsgateway.sources.utils import *
 app_log = setup_logging("telegram")
 
 
-def parseMedia(media):
+def parse_media(media):
     msg = ""
 
     if isinstance(media, MessageMediaGeo) or isinstance(media, MessageMediaGeoLive):
@@ -90,7 +90,7 @@ def parseMedia(media):
     return msg
 
 
-def parseButtons(reply_markup):
+def parse_buttons(reply_markup):
     # if isinstance(reply_markup, ReplyKeyboard..)
     if isinstance(reply_markup, ReplyKeyboardHide):
         return {}
@@ -198,7 +198,7 @@ async def get_chat_id(client, out, from_id, to_id):
         return None
 
 
-async def parseReplyTo(client, app_log, event):
+async def parse_reply_to(client, app_log, event):
     msg = ""
     chat_id = await get_chat_id(client, event.message.out, event.message.from_id, event.message.to_id)
     if chat_id:

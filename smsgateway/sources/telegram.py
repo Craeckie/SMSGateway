@@ -76,7 +76,7 @@ async def callback(event):
 
         if event.message.reply_to_msg_id:
             try:
-                msg += await parseReplyTo(client, app_log, event)
+                msg += await parse_reply_to(client, app_log, event)
             except Exception as e:
                 msg += f"Reply parsing failed: {e}\n\n"
                 app_log.warning(e, exc_info=True)
@@ -84,7 +84,7 @@ async def callback(event):
 
         if event.message.reply_markup:
             try:
-                chat_info.update(parseButtons(event.message.reply_markup))
+                chat_info.update(parse_buttons(event.message.reply_markup))
             except Exception as e:
                 msg += f"Button parsing failed: {e}\n\n"
                 app_log.warning(e, exc_info=True)
@@ -97,7 +97,7 @@ async def callback(event):
             if msg:
                 msg += "\n"
             try:
-                msg += parseMedia(media)
+                msg += parse_media(media)
             except Exception as e:
                 msg += f"Media parsing failed: {e}"
 
