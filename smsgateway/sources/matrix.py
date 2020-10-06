@@ -33,7 +33,7 @@ async def message_callback(room: MatrixRoom, event: RoomMessageText) -> None:
         room_name = room.display_name
 
     chat_info = {
-        'ID': event.server_timestamp,
+        'ID': event.event_id,
         'date': datetime.utcfromtimestamp(event.server_timestamp / 1000),
         'type': 'Group' if is_group else 'User'
     }
@@ -71,7 +71,6 @@ async def main() -> None:
     if STORE_DIR and not os.path.isdir(STORE_DIR):
         os.mkdir(STORE_DIR)
 
-    client = None
     client_config = ClientConfig(store_sync_tokens=True)
     # If there are no previously-saved credentials, we'll use the password
     if not os.path.exists(CONFIG_FILE):
@@ -110,7 +109,7 @@ async def main() -> None:
     # await client.join("your-room-id")
 
     # Load devices & keys
-    #client.load_store()
+    client.load_store()
     
 
     
