@@ -1,0 +1,27 @@
+version: '2.4'
+services:
+  smstools:
+    build: 
+      context: .
+      target: smstools
+    volumes:
+      - sms:/var/spool/sms
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+
+  telegram:
+    build:
+      context: .
+      target: smsgateway
+    volumes:
+      - sms:/var/spool/sms
+      - ./config:/home/gateway/.config/smsgateway/
+    command: ['python3', '-m', 'smsgateway.sources.telegram']
+
+    
+volumes:
+  sms:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+      #size: '67108864' # 64M
