@@ -1,9 +1,9 @@
 appdirs~=1.4.4
 arrow~=0.16.0
-beautifulsoup4~=4.9.1
-cryptography~=3.1
+beautifulsoup4~=4.9.3
+cryptography~=3.1.1
 fbchat~=1.9.7
 imapclient~=2.1.0
-slackclient~=2.8.1
+slackclient~=2.9.1
 telethon~=1.16.4
 matrix-nio[e2e]~=0.15.1
