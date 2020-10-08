@@ -173,12 +173,16 @@ async def get_incoming_info(client, app_log, from_id, to_id):
         else:
             app_log.warning(f"Unknown entity type for id {from_id}!")
     if to_entity:
-        if isinstance(to_entity, Chat):
+        if isinstance(to_entity, Chat) or (isinstance(to_entity, Channel) and to_entity.megagroup):
             info['to'] = to_entity.title
+            info['to_id'] = to_entity.id
             info['type'] = 'Group'
         elif isinstance(to_entity, Channel):
             info['to'] = to_entity.title
+            info['to_id'] = to_entity.id
             info['type'] = 'Channel'
+        elif isinstance(to_entity, User):  # a "user group"..
+            pass
         else:
             app_log.warning(f"Unknown entity type for id {to_id}!")
     return info
