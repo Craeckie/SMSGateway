@@ -87,7 +87,7 @@ async def send_message(message, to_matched):
     #   "",
     #   message
     # ])
-    return (True, msg)
+    return True, msg
 
 
 def run(lines):

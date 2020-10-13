@@ -71,7 +71,7 @@ if __name__ == '__main__':
     init()
 
 command_list.append({
-    'name': 'TG-Forwarder',
+    'name': 'MX-Forwarder',
     'check': check,
     'run': run
 })
