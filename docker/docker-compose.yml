@@ -24,9 +24,12 @@ services:
     build:
       context: .
       target: smsgateway
+    environment:
+      - CONFIG_DIR
     volumes:
       - sms:/var/spool/sms
-      - ./config:/home/gateway/.config/smsgateway/
+      - ./config:$CONFIG_DIR
+    working_dir: "/etc/smsgateway"
     command: ['python3', '-m', 'smsgateway.sources.matrix']
     
 volumes:

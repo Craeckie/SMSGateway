@@ -5,11 +5,11 @@ import sys
 from appdirs import user_config_dir
 from nio import ClientConfig, AsyncClient, LoginResponse
 from smsgateway.config import *
+from smsgateway.sources.utils import *
 
-from smsgateway.sources.matrix import app_log
+app_log = setup_logging("matrix")
 
-
-CONFIG_DIR = user_config_dir(appname="smsgateway", appauthor="craeckie")
+# CONFIG_DIR = user_config_dir(appname="smsgateway", appauthor="craeckie")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "matrix-token.json")
 STORE_DIR = os.path.join(CONFIG_DIR, 'matrix-store')
 
