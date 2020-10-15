@@ -33,7 +33,7 @@ def setup_logging(service_name):
 
     app_log = logging.getLogger('root')
     app_log.setLevel(logging.DEBUG)
-    app_log.addHandler(file_handler)
+    # app_log.addHandler(file_handler)
     app_log.addHandler(std_handler)
     return app_log
 

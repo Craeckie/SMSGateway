@@ -15,6 +15,7 @@ app_log = setup_logging("matrix")
 async def message_callback(room: MatrixRoom, event: Event) -> None:
     if not isinstance(event, RoomMessageText):
         print(event)
+        print(room)
     if type == 'm.room.encrypted' and event.decrypted == False:
         return
 
