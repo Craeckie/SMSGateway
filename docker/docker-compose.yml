@@ -9,6 +9,8 @@ services:
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
 
+    restart: unless-stopped
+
   telegram:
     build:
       context: .
@@ -20,6 +22,8 @@ services:
       - ./config:/home/gateway/.config/smsgateway/
     command: ['python3', '-m', 'smsgateway.sources.telegram']
 
+    restart: unless-stopped
+
   matrix:
     build:
       context: .
@@ -27,10 +31,13 @@ services:
     environment:
       - CONFIG_DIR
     volumes:
+      - ../smsgateway:/usr/local/lib/python3.9/site-packages/smsgateway:ro
       - sms:/var/spool/sms
       - ./config:$CONFIG_DIR
     working_dir: "/etc/smsgateway"
     command: ['python3', '-m', 'smsgateway.sources.matrix']
+
+    restart: unless-stopped
     
 volumes:
   sms:
