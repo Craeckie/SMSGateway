@@ -12,14 +12,15 @@ setuptools.setup(
     long_description_content_type="text/markdown",
 
     install_requires=[
-        "appdirs",
-        "telethon",
-        "fbchat",
-        "arrow",
-        'imapclient',
-        'cryptography',
-        'bs4',
-        'slackclient',
+        'appdirs',
+        'arrow',
         'asyncio',
+        'bs4',
+        'cryptography',
+        'fbchat',
+        'imapclient',
+        'matrix-nio[e2e]',
+        'slackclient',
+        'telethon',
     ]
 )

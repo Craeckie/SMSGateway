@@ -15,8 +15,8 @@ RUN chmod +x /usr/bin/smshandler /usr/bin/run-smstools.sh
 CMD ["run-smstools.sh"]
 
 
+#adduser gateway -h /home/gateway -D -u 100 && \
 FROM base as smsgateway
-RUN adduser gateway -h /home/gateway -D -u 1000 && \
-    mkdir -p /var/log/smsgateway && \
-    chown gateway:gateway /var/log/smsgateway
-USER gateway
+RUN mkdir -p /var/log/smsgateway && \
+    chown 100:100 /var/log/smsgateway
+USER 100

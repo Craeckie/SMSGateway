@@ -13,11 +13,21 @@ services:
     build:
       context: .
       target: smsgateway
+    environment:
+      CONFIG_DIR: "/home/gateway/.config/smsgateway"
     volumes:
       - sms:/var/spool/sms
       - ./config:/home/gateway/.config/smsgateway/
     command: ['python3', '-m', 'smsgateway.sources.telegram']
 
+  matrix:
+    build:
+      context: .
+      target: smsgateway
+    volumes:
+      - sms:/var/spool/sms
+      - ./config:/home/gateway/.config/smsgateway/
+    command: ['python3', '-m', 'smsgateway.sources.matrix']
     
 volumes:
   sms:
