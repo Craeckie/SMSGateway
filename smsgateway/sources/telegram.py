@@ -169,10 +169,13 @@ async def main():
     #       raise Exception("Function timed out!")
     # signal.signal(signal.SIGALRM, handler)
     # signal.alarm(10)
-    try:
-        await asyncio.wait_for(client.catch_up(), timeout=30)
-    except Exception as e:
-        app_log.warning("client.catch_up failed with Exception: %s" % e, exc_info=True)
+
+    # Load previous messages (this might produce lots of messages already sent)
+    # try:
+    #     await asyncio.wait_for(client.catch_up(), timeout=30)
+    # except Exception as e:
+    #     app_log.warning("client.catch_up failed with Exception: %s" % e, exc_info=True)
+
     # signal.alarm(0)
 
     app_log.info("Listening to messages..")
