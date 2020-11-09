@@ -24,8 +24,10 @@ def check(cmd, multiline):
     else:
         return False
 
-async def send_message(message, to):
 
+async def send_message(message, to):
+    init()
+    
     await client.room_send(
         # Watch out! If you join an old room you'll see lots of old messages
         room_id=to,
@@ -53,7 +55,7 @@ def run(lines):
     # init()
 
     app_log.info("Forwarding Matrix Message")
-    message, to = parse_message(lines)
+    message, to = parse_message(lines, app_log=app_log)
 
     if to and message:
         loop = asyncio.get_event_loop()

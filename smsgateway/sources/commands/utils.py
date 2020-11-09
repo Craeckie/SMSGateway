@@ -1,9 +1,7 @@
 import re
 
-from smsgateway.sources.commands.send_matrix import app_log
 
-
-def parse_message(lines):
+def parse_message(lines, app_log=None):
     messageStarted = False
     to_matched = None
     message = ""
@@ -19,5 +17,8 @@ def parse_message(lines):
             if mTo:
                 to_matched = mTo.group(1).strip()
             else:
-                app_log.warning(f"Unkown header: {line}!")
+                if app_log:
+                    app_log.warning(f"Unkown header: {line}!")
+                else:
+                    print(f"Warning: Unkown header: {line}!")
     return message, to_matched
