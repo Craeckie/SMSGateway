@@ -6,6 +6,9 @@ services:
       target: smstools
     volumes:
       - sms:/var/spool/sms
+      - ./config:/home/gateway/.config/smsgateway/
+    environment:
+      CONFIG_DIR: "/home/gateway/.config/smsgateway"
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
 
@@ -22,6 +25,8 @@ services:
       - ./config:/home/gateway/.config/smsgateway/
     command: ['python3', '-m', 'smsgateway.sources.telegram']
 
+    depends_on:
+      - smstools
     restart: unless-stopped
 
   matrix:
@@ -37,6 +42,8 @@ services:
     working_dir: "/etc/smsgateway"
     command: ['python3', '-m', 'smsgateway.sources.matrix']
 
+    depends_on:
+      - smstools
     restart: unless-stopped
     
 volumes:

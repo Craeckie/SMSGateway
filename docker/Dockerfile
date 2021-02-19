@@ -1,7 +1,7 @@
 FROM python:alpine AS base
 RUN apk add bash libffi openssl olm && \
     apk add --virtual .build alpine-sdk libffi-dev openssl-dev olm-dev && \
-    pip install smsgateway && \
+    pip install --pre smsgateway && \
     apk del .build
 
 
@@ -12,6 +12,8 @@ RUN apk add smstools && \
 ADD smsd.conf /etc/smsd.conf
 ADD scripts/smshandler scripts/run-smstools.sh /usr/bin/
 RUN chmod +x /usr/bin/smshandler /usr/bin/run-smstools.sh
+RUN mkdir -p /var/log/smsgateway && \
+    chown smsd:smsd /var/log/smsgateway
 CMD ["run-smstools.sh"]
 
 
