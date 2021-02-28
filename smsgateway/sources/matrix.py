@@ -94,5 +94,5 @@ async def main() -> None:
     await client.sync_forever(full_state=True)
 
 
-
+print("Listening to messages..")
 asyncio.get_event_loop().run_until_complete(main())

@@ -12,6 +12,7 @@ services:
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
 
+    stop_grace_period: 30s
     restart: unless-stopped
 
   telegram:
@@ -23,11 +24,12 @@ services:
     volumes:
       - sms:/var/spool/sms
       - ./config:/home/gateway/.config/smsgateway/
-    command: ['python3', '-m', 'smsgateway.sources.telegram']
+    entrypoint: ['python3', '-m', 'smsgateway.sources.telegram']
 
     depends_on:
       - smstools
     restart: unless-stopped
+    stop_grace_period: 30s
 
   matrix:
     build:
@@ -40,11 +42,12 @@ services:
       - sms:/var/spool/sms
       - ./config:$CONFIG_DIR
     working_dir: "/etc/smsgateway"
-    command: ['python3', '-m', 'smsgateway.sources.matrix']
+    entrypoint: ['python3', '-m', 'smsgateway.sources.matrix']
 
     depends_on:
       - smstools
     restart: unless-stopped
+    stop_grace_period: 30s
     
 volumes:
   sms:
