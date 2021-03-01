@@ -1,6 +1,6 @@
 FROM python:alpine3.12 AS base
 RUN apk add bash libffi openssl olm && \
-    apk add --virtual .build alpine-sdk libffi-dev stack openssl-dev olm-dev && \
+    apk add --virtual .build alpine-sdk libffi-dev cargo openssl-dev olm-dev && \
     pip install --pre smsgateway && \
     apk del .build
 
