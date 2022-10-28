@@ -1,9 +1,9 @@
 appdirs~=1.4.4
-beautifulsoup4~=4.9.3
+beautifulsoup4==4.11.1
 cryptography>=3.2
 fbchat~=1.9.7
-imapclient~=2.1.0
+imapclient~=2.3.1
 slackclient~=2.9.1
-telethon~=1.16.4
-matrix-nio[e2e]~=0.15.1
+telethon~=1.25.4
+matrix-nio[e2e]~=0.20.0
 bs4~=0.0.1
